@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{a348726e-6049-4351-83c5-d9bdc764f111}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- <ClInclude Include="$(MSBuildThisFileDirectory)xb_GUI.h" /> -->
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\xb_GUI.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\xb_GUI_Gadget.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\xb_ScreenText.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\xb_GUI.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\xb_GUI_Gadget.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\xb_ScreenText.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\xb_ScreenText_VT100.h" />
+  </ItemGroup>
+</Project>
