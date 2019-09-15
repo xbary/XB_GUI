@@ -502,7 +502,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 								ch = (char)Ams->Data.KeyboardData.KeyCode;
 							}
 						}
-						else if (id->TypeInputVar == tivIP)
+						else if ((id->TypeInputVar == tivIP) || (id->TypeInputVar == tivIP_U32))
 						{
 							if (((char)Ams->Data.KeyboardData.KeyCode >= '0') && ((char)Ams->Data.KeyboardData.KeyCode <= '9'))
 							{
@@ -719,6 +719,21 @@ TGADGETInputDialog::TGADGETInputDialog(TTaskDef *AOwnerTaskDef, int8_t AIDInputD
 #endif
 					break;
 				}
+			case tivIP_U32:
+			{
+				InputVar.uInt32= (uint32_t *)mb.Data.InputDialogData.ActionData.InputDialogInitData.DataPointer;
+
+#if defined(__riscv64) || defined(ARDUINO_ARCH_STM32)
+				{
+					char szRet[16];
+					sprintf(szRet, "%u.%u.%u.%u", ((uint8_t*)InputVar.uInt32)[0], ((uint8_t*)InputVar.uInt32)[1], ((uint8_t*)InputVar.uInt32)[2], ((uint8_t*)InputVar.uInt32)[3]);
+					EditVar = String(szRet);
+				}
+#else
+				EditVar = InputVar.IP->toString();
+#endif
+				break;
+			}
 			case tivUInt32:
 				{
 					InputVar.uInt32 = (uint32_t *)mb.Data.InputDialogData.ActionData.InputDialogInitData.DataPointer;
@@ -794,6 +809,19 @@ void TGADGETInputDialog::EnterVAR()
 		if (ip.fromString(EditVar))
 		{
 			*InputVar.IP = ip;
+		}
+		else
+		{
+			board.Log("Input IP is Error...", true, true, tlError);
+		}
+		break;
+	}
+	case tivIP_U32:
+	{
+		IPAddress ip;
+		if (ip.fromString(EditVar))
+		{
+			*InputVar.uInt32 = ip;
 		}
 		else
 		{
@@ -880,7 +908,7 @@ void TGADGETInputDialog::PaintVar()
 		WindowClass->PutChar('>');
 		WindowClass->SetBoldChar();
 
-		if (TypeInputVar == tivIP)
+		if ((TypeInputVar == tivIP) || (TypeInputVar == tivIP_U32))
 		{
 			IPAddress ip;
 			if (ip.fromString(EditVar))
