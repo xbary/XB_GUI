@@ -831,7 +831,8 @@ void TGADGETInputDialog::EnterVAR()
 	}
 	case tivUInt32:
 	{
-		uint32_t v = (uint32_t)EditVar.toInt(); 
+		uint32_t v = 0;// (uint32_t)EditVar.toInt();
+		StringToUINT(EditVar.c_str(), &v);
 		if ((v >= MinMax.uint32MinMax.Min) && (v <= MinMax.uint32MinMax.Max))
 		{
 			*InputVar.uInt32 = v; 
@@ -844,7 +845,10 @@ void TGADGETInputDialog::EnterVAR()
 	}
 	case tivUInt16:
 	{
-		uint16_t v = (uint16_t)EditVar.toInt(); 
+		uint32_t vv = 0;
+		StringToUINT(EditVar.c_str(), &vv);
+		uint16_t v = (uint16_t)vv;
+		//uint16_t v = (uint16_t)EditVar.toInt(); 
 		if ((v >= MinMax.uint16MinMax.Min) && (v <= MinMax.uint16MinMax.Max))
 		{
 			*InputVar.uInt16 = v; 
@@ -857,10 +861,14 @@ void TGADGETInputDialog::EnterVAR()
 	}
 	case tivUInt8:
 		{
-			uint32_t v = (uint32_t)EditVar.toInt(); 
+			uint32_t vv = 0;
+			StringToUINT(EditVar.c_str(), &vv);
+			uint8_t v = (uint8_t)vv;
+
+			//uint32_t v = (uint32_t)EditVar.toInt(); 
 			if ((v >= MinMax.uint8MinMax.Min) && (v <= MinMax.uint8MinMax.Max))
 			{
-				*InputVar.uInt8 = (uint8_t)v; 
+				*InputVar.uInt8 = v; 
 			}
 			else
 			{
@@ -923,7 +931,11 @@ void TGADGETInputDialog::PaintVar()
 
 		if (TypeInputVar == tivUInt32)
 		{
-			uint32_t v = (uint32_t)EditVar.toInt(); 
+//			uint32_t v = (uint32_t)EditVar.toInt(); 
+
+			uint32_t v = 0;
+			StringToUINT(EditVar.c_str(), &v);
+
 			if ((v >= MinMax.uint32MinMax.Min) && (v <= MinMax.uint32MinMax.Max))
 			{
 				WindowClass->SetTextColor(tfcYellow);
@@ -936,7 +948,10 @@ void TGADGETInputDialog::PaintVar()
 
 		if (TypeInputVar == tivUInt16)
 		{
-			uint16_t v = (uint16_t)EditVar.toInt(); 
+			uint32_t vv = 0;
+			StringToUINT(EditVar.c_str(), &vv);
+			uint16_t v = (uint16_t)vv; 
+
 			if ((v >= MinMax.uint16MinMax.Min) && (v <= MinMax.uint16MinMax.Max))
 			{
 				WindowClass->SetTextColor(tfcYellow);
@@ -949,7 +964,11 @@ void TGADGETInputDialog::PaintVar()
 
 		if (TypeInputVar == tivUInt8)
 		{
-			uint32_t v = EditVar.toInt(); 
+			//uint32_t v = EditVar.toInt(); 
+			uint32_t v = 0;
+			StringToUINT(EditVar.c_str(), &v);
+
+
 			if (v > 255)
 			{
 				WindowClass->SetTextColor(tfcRed);
