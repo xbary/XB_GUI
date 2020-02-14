@@ -118,8 +118,6 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 				if (yt < 0) yt = 0;
 				Ams->Data.WindowData.ActionData.Create.X = WINDOW_POS_X_DEF;
 				Ams->Data.WindowData.ActionData.Create.Y = WINDOW_POS_Y_DEF;
-//				Ams->Data.WindowData.ActionData.Create.X = xt;
-//				Ams->Data.WindowData.ActionData.Create.Y = yt;
 				Ams->Data.WindowData.ActionData.Create.Width = w + 2;
 				Ams->Data.WindowData.ActionData.Create.Height = h + 2;
 				res = true;
@@ -226,20 +224,36 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 								{
 									str = "";
 									TTextAlignment textalignment = taLeft; 
-									if (m->GetItemMenuString(i, str,&textalignment))
+									bool Nmenu = false;
+									if (m->GetItemMenuString(i, str,&textalignment,&Nmenu))
 									{
-										if (str == "-")	for (uint8_t i = 0; i < m->WindowClass->Width - 3; i++) str = str + '-';
-										
+										if (str == "-")
+										{
+											for (uint8_t i = 0; i < m->WindowClass->Width - 3; i++) str = str + '-';
+										}
+
 										if (m->CurrentItem == i)
 										{
 											m->WindowClass->SetReverseChar();
 										}
-										
-										m->WindowClass->PutStr(0, i, str.c_str(), m->WidthItems, ' ', textalignment);
+
+										if (Nmenu == false)
+										{
+											m->WindowClass->PutStr(0, i, str.c_str(), m->WidthItems, ' ', textalignment);
+										}
+										else
+										{
+											m->WindowClass->PutStr(0, i, str.c_str(), m->WidthItems-3, ' ', textalignment);
+											m->WindowClass->PutStr(m->WidthItems - 3, i, " >>");
+										}
+
 										if (m->CurrentItem == i)
 										{
 											m->WindowClass->SetNormalChar();
 										}
+
+										
+
 									}
 								}
 								m->TypePaintMenuGadget = tpmgNone;
@@ -250,14 +264,32 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 							{
 								str="";
 								TTextAlignment textalignment = taLeft; 
-								m->GetItemMenuString(m->LastItem, str, &textalignment);
+								bool Nmenu = false;
+								m->GetItemMenuString(m->LastItem, str, &textalignment, &Nmenu);
 								if (str == "-")	for (uint8_t i = 0; i < m->WindowClass->Width - 3; i++) str = str + '-';
+								if (Nmenu == false)
+								{
+									m->WindowClass->PutStr(0, m->LastItem, str.c_str(), m->WidthItems, ' ', textalignment);
+								}
+								else
+								{
+									m->WindowClass->PutStr(0, m->LastItem, str.c_str(), m->WidthItems-3, ' ', textalignment);
+									m->WindowClass->PutStr(m->WidthItems - 3, m->LastItem, " >>");
+								}
 
-								m->WindowClass->PutStr(0, m->LastItem, str.c_str(), m->WidthItems, ' ', textalignment);
 								m->WindowClass->SetReverseChar();
 								textalignment = taLeft; 
-								m->GetItemMenuString(m->CurrentItem, str, &textalignment);
-								m->WindowClass->PutStr(0, m->CurrentItem, str.c_str(), m->WidthItems, ' ', textalignment);
+								m->GetItemMenuString(m->CurrentItem, str, &textalignment,&Nmenu);
+								if (Nmenu == false)
+								{
+									m->WindowClass->PutStr(0, m->CurrentItem, str.c_str(), m->WidthItems, ' ', textalignment);
+								}
+								else
+								{
+									m->WindowClass->PutStr(0, m->CurrentItem, str.c_str(), m->WidthItems-3, ' ', textalignment);
+									m->WindowClass->PutStr(m->WidthItems - 3, m->CurrentItem, " >>");
+
+								}
 								m->TypePaintMenuGadget = tpmgNone;
 								break;
 							}
@@ -265,10 +297,20 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 							{
 								str = "";
 								TTextAlignment textalignment = taLeft; 
-								m->GetItemMenuString(m->CurrentItem, str, &textalignment);
+								bool Nmenu = false;
+								m->GetItemMenuString(m->CurrentItem, str, &textalignment, &Nmenu);
 								if (str == "-")	for (uint8_t i = 0; i < m->WindowClass->Width - 3; i++) str = str + '-';
 								m->WindowClass->SetReverseChar();
-								m->WindowClass->PutStr(0, m->CurrentItem, str.c_str(), m->WidthItems, ' ', textalignment);
+								if (Nmenu == false)
+								{
+									m->WindowClass->PutStr(0, m->CurrentItem, str.c_str(), m->WidthItems, ' ', textalignment);
+								}
+								else
+								{
+									m->WindowClass->PutStr(0, m->CurrentItem, str.c_str(), m->WidthItems-3, ' ', textalignment);
+									m->WindowClass->PutStr(m->WidthItems - 3, m->CurrentItem, " >>");
+								}
+
 								m->TypePaintMenuGadget = tpmgNone;
 								break;
 							}
@@ -436,17 +478,13 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 						id->MoveEditCursor(-1);
 						id->EditVar.remove(id->CursorPosInputVar, 1);
 						id->PaintVar();
-
 						res = true;
 						break;
 					}
 					case KF_DELETE:
 					{
-						board.Log(id->EditVar.c_str(),true,true);
 						id->EditVar.remove(id->CursorPosInputVar, 1);
-						board.Log(id->EditVar.c_str(), true, true);
 						id->PaintVar();
-
 						res = true;
 						break;
 					}
@@ -538,6 +576,85 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 								ch = (char)Ams->Data.KeyboardData.KeyCode;
 							}
 						}
+						else if (id->TypeInputVar == tivUInt8_HEX)
+						{
+							if ((((char)Ams->Data.KeyboardData.KeyCode >= '0') && ((char)Ams->Data.KeyboardData.KeyCode <= '9')) || (((char)Ams->Data.KeyboardData.KeyCode >= 'A') && ((char)Ams->Data.KeyboardData.KeyCode <= 'F')) || (((char)Ams->Data.KeyboardData.KeyCode >= 'a') && ((char)Ams->Data.KeyboardData.KeyCode <= 'f')))
+							{
+								ch = (char)Ams->Data.KeyboardData.KeyCode;
+							}
+						}
+						else if (id->TypeInputVar == tiv_double)
+						{
+							if ((((char)Ams->Data.KeyboardData.KeyCode >= '0') && ((char)Ams->Data.KeyboardData.KeyCode <= '9')))
+							{
+								ch = (char)Ams->Data.KeyboardData.KeyCode;
+							}
+							else if (((char)Ams->Data.KeyboardData.KeyCode == '-'))
+							{
+								int c = 0;
+								{
+									int i = 0;
+									while (i < id->EditVar.length())
+									{
+										if (id->EditVar.charAt(i) == '-') c++;
+										i++;
+									}
+								}
+								if (c == 0)
+								{
+									if (id->CursorPosInputVar == 0)
+									{
+										ch = (char)Ams->Data.KeyboardData.KeyCode;
+									}
+								}
+							}
+							else if(((char)Ams->Data.KeyboardData.KeyCode == '.'))
+							{
+								int c = 0;
+								{
+									int i = 0;
+									while (i < id->EditVar.length())
+									{
+										if (id->EditVar.charAt(i) == '.') c++;
+										i++;
+									}
+								}
+								if (c == 0)
+								{
+									if (id->CursorPosInputVar > 0)
+									{
+										ch = (char)Ams->Data.KeyboardData.KeyCode;
+									}
+								}
+							}
+						}
+						else if (id->TypeInputVar == tiv_udouble)
+						{
+							if ((((char)Ams->Data.KeyboardData.KeyCode >= '0') && ((char)Ams->Data.KeyboardData.KeyCode <= '9')))
+							{
+								ch = (char)Ams->Data.KeyboardData.KeyCode;
+							}
+							else if (((char)Ams->Data.KeyboardData.KeyCode == '.'))
+							{
+								int c = 0;
+								{
+									int i = 0;
+									while (i < id->EditVar.length())
+									{
+										if (id->EditVar.charAt(i) == '.') c++;
+										i++;
+									}
+								}
+								if (c == 0)
+								{
+									if (id->CursorPosInputVar > 0)
+									{
+										ch = (char)Ams->Data.KeyboardData.KeyCode;
+									}
+								}
+							}
+						}
+
 						if (ch != 0)
 						{
 							id->EditInsertChar(ch);
@@ -686,6 +803,8 @@ TGADGETInputDialog::TGADGETInputDialog(TTaskDef *AOwnerTaskDef, int8_t AIDInputD
 		{
 			TypeInputVar = mb.Data.InputDialogData.ActionData.InputDialogInitData.TypeInputVar;
 			MaxLengthVar = mb.Data.InputDialogData.ActionData.InputDialogInitData.MaxLength;
+			MinMax.uint32MinMax.Max = 0;
+			MinMax.uint32MinMax.Min = 0;
 
 			switch (TypeInputVar)
 			{
@@ -755,6 +874,27 @@ TGADGETInputDialog::TGADGETInputDialog(TTaskDef *AOwnerTaskDef, int8_t AIDInputD
 					MinMax.uint8MinMax = mb.Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint8MinMax;
 					break;
 				}
+			case tivUInt8_HEX:
+			{
+				InputVar.uInt8 = (uint8_t*)mb.Data.InputDialogData.ActionData.InputDialogInitData.DataPointer;
+				EditVar = String((uint8_t)(*InputVar.uInt8),HEX);
+				MinMax.uint8MinMax = mb.Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint8MinMax;
+				break;
+			}
+			case tiv_double:
+			{
+				InputVar._double = (double *)mb.Data.InputDialogData.ActionData.InputDialogInitData.DataPointer;
+				EditVar = String(*InputVar._double,10);
+				StringTrimRight(&EditVar, '0');
+				break;
+			}
+			case tiv_udouble:
+			{
+				InputVar._udouble = (double*)mb.Data.InputDialogData.ActionData.InputDialogInitData.DataPointer;
+				EditVar = String(*InputVar._udouble, 10);
+				StringTrimRight(&EditVar, '0');
+				break;
+			}
 			default: break;
 			}
 			CursorPosInputVar = EditVar.length();
@@ -876,6 +1016,41 @@ void TGADGETInputDialog::EnterVAR()
 			}
 			break;
 		}
+	case tivUInt8_HEX:
+	{
+		uint32_t vv = 0;
+		hexstrTouint32((char*)EditVar.c_str(), 2, &vv);
+		uint8_t v = (uint8_t)vv;
+		
+		if ((v >= MinMax.uint8MinMax.Min) && (v <= MinMax.uint8MinMax.Max))
+		{
+			*InputVar.uInt8 = v;
+		}
+		else
+		{
+			board.Log("Input Value is out of range...", true, true, tlError);
+		}
+		break;
+	}
+	case tiv_double:
+	{
+		double vv = strtodouble(EditVar);
+		*InputVar._double=vv;
+		break;
+	}
+	case tiv_udouble:
+	{
+		double vv = strtodouble(EditVar);
+		if (vv>= 0.0f)
+		{
+			*InputVar._udouble = vv;
+		}
+		else
+		{
+			board.Log("Input Value is not unsigned...", true, true, tlError);
+		}
+		break;
+	}
 
 	default: break;
 	}
@@ -912,8 +1087,21 @@ void TGADGETInputDialog::PaintVar()
 		uint8_t l = EditVar.length();
 		uint8_t x = ((WindowClass->Width - 2) / 2) - ((MaxLengthVar + 2) / 2);
 
-		WindowClass->GoToXY(x, 3);
-		WindowClass->PutChar('>');
+		
+		if (TypeInputVar == tivUInt8_HEX)
+		{
+			WindowClass->GoToXY(x-1, 3);
+			WindowClass->PutChar('>');
+			WindowClass->PutChar('$');
+
+		}
+		else
+		{
+			WindowClass->GoToXY(x, 3);
+			WindowClass->PutChar('>');
+		}
+
+		
 		WindowClass->SetBoldChar();
 
 		if ((TypeInputVar == tivIP) || (TypeInputVar == tivIP_U32))
@@ -931,7 +1119,6 @@ void TGADGETInputDialog::PaintVar()
 
 		if (TypeInputVar == tivUInt32)
 		{
-//			uint32_t v = (uint32_t)EditVar.toInt(); 
 
 			uint32_t v = 0;
 			StringToUINT(EditVar.c_str(), &v);
@@ -987,6 +1174,32 @@ void TGADGETInputDialog::PaintVar()
 			}
 		}
 
+		if (TypeInputVar == tivUInt8_HEX)
+		{
+			uint32_t v = 0;
+			hexstrTouint32((char *)EditVar.c_str(), 2, &v);
+
+			//board.Log(String(EditVar+" | "+String(v)).c_str(), true, true);
+
+			if (v > 255)
+			{
+				WindowClass->SetTextColor(tfcRed);
+			}
+			else
+			{
+				uint8_t v8 = (uint8_t)v;
+				if ((v8 >= MinMax.uint8MinMax.Min) && (v8 <= MinMax.uint8MinMax.Max))
+				{
+					WindowClass->SetTextColor(tfcYellow);
+				}
+				else
+				{
+					WindowClass->SetTextColor(tfcRed);
+				}
+			}
+		}
+
+
 		for (uint8_t i = 0; i < MaxLengthVar; i++)
 		{
 			if (i < l)
@@ -1003,6 +1216,7 @@ void TGADGETInputDialog::PaintVar()
 		WindowClass->SetNormalChar();
 		WindowClass->PutChar('<');
 		WindowClass->GoToXY(x + 1, 4);
+
 		for (uint8_t i = 0; i <= MaxLengthVar; i++)
 		{
 			if (i == CursorPosInputVar)
@@ -1356,7 +1570,7 @@ TGADGETMenu::~TGADGETMenu()
 	DELETE_FROM_LIST(GADGETMenusList);
 }
 
-bool TGADGETMenu::GetItemMenuString(uint8_t Aindx, String &Astr, TTextAlignment *Atextalign)
+bool TGADGETMenu::GetItemMenuString(uint8_t Aindx, String &Astr, TTextAlignment *Atextalign, bool *Anmenu)
 {
 #ifdef XB_GUI
 	if (Aindx < ItemCount)
@@ -1375,7 +1589,18 @@ bool TGADGETMenu::GetItemMenuString(uint8_t Aindx, String &Astr, TTextAlignment 
 		{
 			mb.Data.MenuData.ActionData.MenuItemData.TextAlignment = *Atextalign;	
 		}
-		
+
+		if (Anmenu == NULL)
+		{
+			mb.Data.MenuData.ActionData.MenuItemData.NMenu = false;
+		}
+		else
+		{
+			mb.Data.MenuData.ActionData.MenuItemData.NMenu = *Anmenu;
+		}
+
+
+
 		if (!board.DoMessage(&mb, true, NULL, OwnerTaskDef))
 		{
 			return false;
@@ -1385,6 +1610,12 @@ bool TGADGETMenu::GetItemMenuString(uint8_t Aindx, String &Astr, TTextAlignment 
 		{
 			*Atextalign = mb.Data.MenuData.ActionData.MenuItemData.TextAlignment;
 		}
+
+		if (Anmenu != NULL)
+		{
+			*Anmenu = mb.Data.MenuData.ActionData.MenuItemData.NMenu;
+		}
+
 		return true;
 	}
 	else

@@ -28,7 +28,7 @@ public:
 	bool MenuIsInit;
 	
 	uint8_t GetItemsMenuCount();
-	bool GetItemMenuString(uint8_t Aindx, String &Astr, TTextAlignment *Atextalign=NULL);
+	bool GetItemMenuString(uint8_t Aindx, String &Astr, TTextAlignment *Atextalign=NULL, bool *Anmenu=NULL);
 	bool GetCaptionMenuString(String &Astr);
 	void ChangeCurrentItemMenu(uint8_t Anewcurrentitem);
 	void ClickItemMenu(uint8_t Aclickitem);
@@ -61,6 +61,10 @@ typedef union
 	char *DynArrayChar;
 	String *DynString;
 	IPAddress* IP;
+	uint8_t* uInt8_HEX;
+	double* _double;
+	double* _udouble;
+
 } TInputVar;
 
 typedef enum { tpidgAll } TTypePaintInputDialogGadget;
@@ -207,6 +211,7 @@ if (Am->Data.MenuData.ActionData.MenuItemData.ItemIndex == 255) \
 		{ \
 			*(Am->Data.MenuData.ActionData.MenuItemData.PointerString) = String("[" + String(Aboolvalue == true ? "*" : " ") + "] "+ String(Aname)); \
 			Am->Data.MenuData.ActionData.MenuItemData.TextAlignment = Atextalignment; \
+			Am->Data.MenuData.ActionData.MenuItemData.NMenu = false; \
 			return true; \
 		} \
 	} 
@@ -220,9 +225,26 @@ if (Am->Data.MenuData.ActionData.MenuItemData.ItemIndex == 255) \
 		{ \
 			*(Am->Data.MenuData.ActionData.MenuItemData.PointerString) = String(Aname); \
 			Am->Data.MenuData.ActionData.MenuItemData.TextAlignment = Atextalignment; \
+			Am->Data.MenuData.ActionData.MenuItemData.NMenu = false; \
 			return true; \
 		} \
 	} 
+
+#define BEGIN_MENUITEMMENU(Aname,Atextalignment) \
+	{ \
+	if (Am->Data.MenuData.TypeMenuAction == tmaGET_ITEM_MENU_STRING) \
+	{ \
+		CurrentItemIndex = Am->Data.MenuData.ActionData.MenuItemData.ItemIndex; \
+		if (CurrentItemIndex==ItemIndex) \
+		{ \
+			*(Am->Data.MenuData.ActionData.MenuItemData.PointerString) = String(Aname); \
+			Am->Data.MenuData.ActionData.MenuItemData.TextAlignment = Atextalignment; \
+			Am->Data.MenuData.ActionData.MenuItemData.NMenu = true; \
+			return true; \
+		} \
+	} 
+
+
 
 #define CLICK_MENUITEM() } \
 	if (Am->Data.MenuData.TypeMenuAction == tmaCLICK_ITEM_MENU) \
@@ -311,7 +333,7 @@ if (Am->Data.InputDialogData.TypeInputDialogAction==ida_INIT_INPUTDIALOG) \
 	Am->Data.InputDialogData.ActionData.InputDialogInitData.TypeInputVar = ATypeInputVar; \
 	Am->Data.InputDialogData.ActionData.InputDialogInitData.MaxLength = AMaxLength; \
 	Am->Data.InputDialogData.ActionData.InputDialogInitData.DataPointer = ADataPointer; \
-	if (ATypeInputVar==tivUInt8) \
+	if ((ATypeInputVar==tivUInt8) || (ATypeInputVar==tivUInt8_HEX)) \
 	{ \
 	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint8MinMax.Min = Amin; \
 	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint8MinMax.Max = Amax; \

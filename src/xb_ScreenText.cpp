@@ -49,7 +49,7 @@ void TScreenTextClass::Clear(void)
 {
 #ifdef SCREENTEXT_TYPE_BOARDLOG
 		uint32_t ltx = board.TXCounter;
-		PutGui(FSS(VT100_CLS));
+		PutGui(VT100_CLS);
 		board.TXCounter=ltx;
 
 		RealCurrentX = 0;
@@ -62,7 +62,7 @@ void TScreenTextClass::SetCharMode_Normal(void)
 {
 #ifdef SCREENTEXT_TYPE_BOARDLOG
 	uint32_t ltx = board.TXCounter;
-	PutGui(FSS(VT100_OFF));
+	PutGui(VT100_OFF);
 	board.TXCounter = ltx;
 //	SetForegroundColor(CurrentForegroundColor);
 //	SetBackgroundColor(CurrentBackgroundColor);
@@ -74,7 +74,7 @@ void TScreenTextClass::SetCharMode_Bold(void)
 {
 #ifdef SCREENTEXT_TYPE_BOARDLOG
 	uint32_t ltx = board.TXCounter;
-	PutGui(FSS(VT100_BOLD));
+	PutGui(VT100_BOLD);
 	board.TXCounter = ltx;
 #endif
 }
@@ -83,7 +83,7 @@ void TScreenTextClass::SetCharMode_Blink(void)
 {
 #ifdef SCREENTEXT_TYPE_BOARDLOG
 	uint32_t ltx = board.TXCounter;
-	PutGui(FSS(VT100_BLINK));
+	PutGui(VT100_BLINK);
 	board.TXCounter = ltx;
 #endif
 }
@@ -92,7 +92,7 @@ void TScreenTextClass::SetCharMode_Reverse(void)
 {
 #ifdef SCREENTEXT_TYPE_BOARDLOG
 	uint32_t ltx = board.TXCounter;
-	PutGui(FSS(VT100_REVERSE));
+	PutGui(VT100_REVERSE);
 	board.TXCounter = ltx;
 #endif
 }
@@ -173,8 +173,15 @@ bool TScreenTextClass::GotoXY(int16_t Ax, int16_t Ay)
 			{
 				if ((RealCurrentY >= 0) && (RealCurrentX >= 0))
 				{
-					String cbuf = FSS("\033[") + String(RealCurrentY + 1) + ';' + String(RealCurrentX + 1) + 'H';
-					PutGui(cbuf.c_str());
+					char cbuf[16] = "\033[";
+					uint8_t i = strlen(cbuf);
+					i += inttoa(RealCurrentY + 1, &cbuf[i]);
+					cbuf[i++] = ';';
+					i += inttoa(RealCurrentX + 1, &cbuf[i]);
+					cbuf[i++] = 'H';
+					cbuf[i++] = 0;
+					//String cbuf = FSS("\033[") + String(RealCurrentY + 1) + ';' + String(RealCurrentX + 1) + 'H';
+					PutGui(cbuf);
 				}
 			}
 			board.TXCounter = ltx;
@@ -257,8 +264,14 @@ void TScreenTextClass::SetForegroundColor(TTextForegroundColor ATextForegroundCo
 		CurrentForegroundColor = ATextForegroundColor;
 		uint32_t ltx = board.TXCounter;
 		{
-			String cbuf = FSS("\033[3") + String((uint8_t)ATextForegroundColor) + 'm';
-			PutGui(cbuf.c_str());
+			char cbuf[16] = "\033[3";
+			uint8_t i = strlen(cbuf);
+			i += inttoa(ATextForegroundColor, &cbuf[i]);
+			cbuf[i++] = 'm';
+			cbuf[i++] = 0;
+
+//			String cbuf = FSS("\033[3") + String((uint8_t)ATextForegroundColor) + 'm';
+			PutGui(cbuf);
 		}
 		board.TXCounter = ltx;
 	}
@@ -272,8 +285,14 @@ void TScreenTextClass::SetBackgroundColor(TTextBackgroundColor ATextBackgroundCo
 		CurrentBackgroundColor = ATextBackgroundColor;
 		uint32_t ltx = board.TXCounter;
 		{
-			String cbuf = FSS("\033[4") + String((uint8_t)ATextBackgroundColor) + 'm';
-			PutGui(cbuf.c_str());
+			char cbuf[16] = "\033[4";
+			uint8_t i = strlen(cbuf);
+			i += inttoa(ATextBackgroundColor, &cbuf[i]);
+			cbuf[i++] = 'm';
+			cbuf[i++] = 0;
+
+//			String cbuf = FSS("\033[4") + String((uint8_t)ATextBackgroundColor) + 'm';
+			PutGui(cbuf);
 		}
 		board.TXCounter = ltx;
 	}
@@ -454,7 +473,7 @@ void TScreenTextClass::Send_GetCurrentCursorPosition()
 	{
 		VT100_CurrentXYCursor = "";
 		uint32_t ltx = board.TXCounter;
-		PutGui(FSS(VT100_GETXY));
+		PutGui(VT100_GETXY);
 		board.TXCounter = ltx;
 	}
 #endif
@@ -468,6 +487,13 @@ void TScreenTextClass::GotoXY_CurrentCursorPosition()
 		{
 			uint32_t ltx = board.TXCounter;
 			{
+/*
+				char cbuf[16] = "\033[";
+				uint8_t i = strlen(cbuf);
+				i += inttoa(ATextBackgroundColor, &cbuf[i]);
+				cbuf[i++] = 'm';
+				cbuf[i++] = 0;
+*/
 				String cbuf = FSS("\033[") + VT100_CurrentXYCursor + 'H';
 				PutGui(cbuf.c_str());
 			}
@@ -511,7 +537,7 @@ void TScreenTextClass::SaveCursorPosition(void)
 #ifdef SCREENTEXT_TYPE_BOARDLOG
 	{
 		uint32_t ltx = board.TXCounter;
-		PutGui(FSS(VT100_SAVECURSORPOSITION));
+		PutGui(VT100_SAVECURSORPOSITION);
 		board.TXCounter = ltx;
 	}
 #endif
@@ -522,7 +548,7 @@ void TScreenTextClass::RestoreCursorPosition(void)
 #ifdef SCREENTEXT_TYPE_BOARDLOG
 	{
 		uint32_t ltx = board.TXCounter;
-		PutGui(FSS(VT100_RESTORECURSORPOSITION));
+		PutGui(VT100_RESTORECURSORPOSITION);
 		board.TXCounter = ltx;
 	}
 #endif
@@ -540,7 +566,7 @@ void TScreenTextClass::ShowCursor(void)
 		if (VisibleCursorStatus == 0)
 		{
 			uint32_t ltx = board.TXCounter;
-			PutGui(FSS(VT100_SHOWCURSOR));
+			PutGui(VT100_SHOWCURSOR);
 			board.TXCounter = ltx;
 		}
 	}
@@ -554,7 +580,7 @@ void TScreenTextClass::HideCursor(void)
 		if (VisibleCursorStatus == 0)
 		{
 			uint32_t ltx = board.TXCounter;
-			PutGui(FSS(VT100_HIDECURSOR));
+			PutGui(VT100_HIDECURSOR);
 			board.TXCounter = ltx;
 		}
 		VisibleCursorStatus++;
