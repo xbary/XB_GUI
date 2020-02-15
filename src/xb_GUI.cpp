@@ -921,6 +921,17 @@ void GUI_WindowDestroy(TWindowClass **Awindowclass)
 			board.SendMessage_FreePTR(*Awindowclass);
 			delete(*Awindowclass);
 			*Awindowclass = NULL;
+
+			{
+				ScreenText.DesktopWidth = 0;
+				ScreenText.DesktopHeight = 0;
+				uint16_t w = GUI_GetWidthDesktop() + 1;
+				uint16_t h = GUI_GetHeightDesktop() + 1;
+				if (ScreenText.DesktopWidth < w) ScreenText.DesktopWidth = w;
+				if (ScreenText.DesktopHeight < h) ScreenText.DesktopHeight = h;
+			}
+
+
 			if (WindowsList == NULL)
 			{
 				GUI_ClearScreen();
@@ -951,8 +962,8 @@ void GUI_Show(void)
 {
 	WindowRepaintStep = wrsStartRepaint;
 	ScreenText.Clear();
-	ScreenText.GotoXY(0, ScreenText.DesktopHeight);
 	GUI_RepaintAllWindows();
+	ScreenText.GotoXY(0, ScreenText.DesktopHeight);
 }
 
 void GUI_Hide(void)
