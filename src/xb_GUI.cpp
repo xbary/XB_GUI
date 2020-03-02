@@ -3,6 +3,9 @@
 #include "xb_GUI.h"
 #include "xb_GUI_Gadget.h"
 
+
+TGADGETMenu* GUI_menuhandle0_main;
+
 TTaskDef XB_GUI_DefTask = {2, &GUI_Setup,&GUI_DoLoop,&GUI_DoMessage};
 DEFLIST_VAR(TWindowClass, WindowsList)
 TWindowClass *CurrentWindowRepaint = NULL;
@@ -28,11 +31,134 @@ typedef enum {
 
 TWindowRepaintStep  WindowRepaintStep = wrsOFF;
 
+typedef enum { coAll=0, coAllWindowsPos=1, coWindowPos=2 } TConfigurationOption;
+
+void GUI_LoadConfiguration(TConfigurationOption Aco = coAll, TWindowClass* Awc = NULL)
+{
+#ifdef XB_PREFERENCES
+	switch ((uint8_t)Aco)
+	{
+	case coAll:
+	{
+		if (board.PREFERENCES_BeginSection("GUI"))
+		{
+			board.PREFERENCES_EndSection();
+		}
+
+	}
+	case coAllWindowsPos:
+	{
+		TWindowClass* WC = WindowsList;
+		while (WC != NULL)
+		{
+			GUI_LoadConfiguration(coWindowPos, WC);
+			WC = WC->Next;
+		}
+		break;
+	}
+	case coWindowPos:
+	{
+		if (Awc != NULL)
+		{
+			String tn = "";
+			if (board.SendMessage_GetTaskNameString(Awc->taskdef, tn))
+			{
+				tn += "G" + String(Awc->ID);
+
+				if (board.PREFERENCES_BeginSection(tn))
+				{
+					//board.Log(String("GET "+tn).c_str(), true, true, tlWarn);
+					Awc->X = board.PREFERENCES_GetINT16("X", Awc->X);
+					Awc->Y = board.PREFERENCES_GetINT16("Y", Awc->Y);
+					board.PREFERENCES_EndSection();
+				}
+			}
+		}
+		break;
+	}
+	default: break;
+	}
+#endif
+}
+
+void GUI_SaveConfiguration(TConfigurationOption Aco, TWindowClass* Awc = NULL)
+{
+#ifdef XB_PREFERENCES
+	switch ((uint8_t)Aco)
+	{
+	case coAll:
+	{
+		if (board.PREFERENCES_BeginSection("GUI"))
+		{
+			//board.PREFERENCES_PutBool("ConInWin", xb_board_ConsoleInWindow);
+			board.PREFERENCES_EndSection();
+		}
+
+	}
+	case coAllWindowsPos:
+	{
+		TWindowClass* WC = WindowsList;
+		while (WC != NULL)
+		{
+			GUI_SaveConfiguration(coWindowPos, WC);
+			WC = WC->Next;
+		}
+		break;
+	}
+	case coWindowPos:
+	{
+		if (Awc != NULL)
+		{
+			String tn = "";
+			if (board.SendMessage_GetTaskNameString(Awc->taskdef, tn))
+			{
+				tn += "G" + String(Awc->ID);
+				if (board.PREFERENCES_BeginSection(tn))
+				{
+					//board.Log(String("SET " + tn).c_str(), true, true, tlWarn);
+					board.PREFERENCES_PutINT16("X", Awc->X);
+					board.PREFERENCES_PutINT16("Y", Awc->Y);
+					board.PREFERENCES_EndSection();
+				}
+			}
+		}
+		break;
+	}
+	default: break;
+	}
+#endif
+}
+
+void GUI_ResetConfiguration()
+{
+#ifdef XB_PREFERENCES
+	TWindowClass* WC = WindowsList;
+	while (WC != NULL)
+	{
+		String tn = "";
+		if (board.SendMessage_GetTaskNameString(WC->taskdef, tn))
+		{
+			tn = tn + "G" + String(WC->ID);
+			if (board.PREFERENCES_BeginSection(tn))
+			{
+				//board.Log(String("RESET " + tn).c_str(), true, true, tlWarn);
+				board.PREFERENCES_CLEAR();
+				board.PREFERENCES_EndSection();
+			}
+		}
+		WC = WC->Next;
+	}
+#endif
+}
+
+
+
 #pragma region WINDOWCLASS
 
 TWindowClass::TWindowClass(TTaskDef *ATaskDef, int8_t AWindowID, bool Aactive, bool Aescapeclose, Tx Ax, Ty Ay)
 {
 #ifdef XB_GUI
+	DoClose = false;
 	TextWordWrap = false;
 	LastActive = NULL;
 	ModalWin = NULL;
@@ -91,7 +217,14 @@ TWindowClass::TWindowClass(TTaskDef *ATaskDef, int8_t AWindowID, bool Aactive, b
 			IsInit = true;
 			Visible = true;
 
+			X = mb.Data.WindowData.ActionData.Create.X;
+			Y = mb.Data.WindowData.ActionData.Create.Y;
+			GUI_LoadConfiguration(coWindowPos, this);
+			mb.Data.WindowData.ActionData.Create.X=X;
+			mb.Data.WindowData.ActionData.Create.Y=Y;
 			SetWindowPositionFrom(&mb.Data.WindowData);
+			
+
 
 			if (Aactive)
 			{
@@ -127,6 +260,7 @@ TWindowClass::TWindowClass(TTaskDef *ATaskDef, int8_t AWindowID, bool Aactive, b
 	}
 #endif
 }
+
 
 void TWindowClass::SetWindowPositionFrom(TWindowData *Awd)
 {
@@ -225,6 +359,7 @@ void TWindowClass::SetWindowPositionFrom(TWindowData *Awd)
 	if (X + Width > ScreenText.ScreenWidth) X = ScreenText.ScreenWidth - Width;
 	if (Y + Height > ScreenText.ScreenHeight) Y = ScreenText.ScreenHeight - Height;
 
+
 	WindowRect.Left = X;
 	WindowRect.Top = Y;
 	WindowRect.Right = X + Width - 1;
@@ -235,6 +370,11 @@ TWindowClass::~TWindowClass()
 {
 	// Wyciêcie okna z listy
 	DELETE_FROM_LIST(WindowsList);
+}
+
+void TWindowClass::Close()
+{
+	DoClose = true;
 }
 
 void TWindowClass::GetCaptionWindow(String &Astr)
@@ -724,6 +864,10 @@ void TWindowClass::PaintBorder()
 {
 	TTextForegroundColor LastTextColor = TextColor;
 	TTextBackgroundColor LastTextBackgroundColor = TextBackgroundColor;
+	bool LastTextWordWrap = TextWordWrap;
+
+	TextWordWrap = false;
+
 	if (Active)
 	{
 		TextColor = BorderTextActiveColor;
@@ -767,6 +911,7 @@ void TWindowClass::PaintBorder()
 	SetNormalChar();
 	EndDraw(true);
 
+	TextWordWrap = LastTextWordWrap;
 	TextBackgroundColor = LastTextBackgroundColor;
 	TextColor = LastTextColor;
 
@@ -880,9 +1025,7 @@ void GUI_WindowDestroy(TWindowClass **Awindowclass)
 	{
 		if (*Awindowclass != NULL)
 		{
-
-			if (CurrentWindowRepaint == *Awindowclass) CurrentWindowRepaint = NULL;
-
+			(*Awindowclass)->DoClose = false;
 			// oznajmienie zadania ¿e jego okno zosta³o skasowane
 #ifdef XB_GUI
 			TMessageBoard mb; xb_memoryfill(&mb, sizeof(TMessageBoard), 0);
@@ -918,9 +1061,11 @@ void GUI_WindowDestroy(TWindowClass **Awindowclass)
 					WindowSetActivate = (*Awindowclass)->LastActive;
 				}
 			}
-			board.SendMessage_FreePTR(*Awindowclass);
+			
+			if (*Awindowclass!=NULL)
 			delete(*Awindowclass);
-			*Awindowclass = NULL;
+			board.SendMessage_FreePTR(*Awindowclass);
+			
 
 			{
 				ScreenText.DesktopWidth = 0;
@@ -1096,6 +1241,16 @@ uint32_t GUI_DoLoop(void)
 	DEF_WAITMS_VAR(txcountcheck);
 	static uint32_t LastTXCounter = 0;
 
+	if (CurrentWindowRepaint != NULL)
+	{
+		if (CurrentWindowRepaint->DoClose)
+		{
+			GUI_WindowDestroy((TWindowClass **)&CurrentWindowRepaint);
+			CurrentWindowRepaint = NULL;
+			return 0;
+		}
+	}
+
 	switch (WindowRepaintStep)
 	{
 	case wrsOFF:
@@ -1150,6 +1305,7 @@ uint32_t GUI_DoLoop(void)
 					WindowRepaintStep = wrsCheckRepaint;
 					break;
 				}
+
 				CurrentWindowRepaint = CurrentWindowRepaint->Next;
 			}
 		}
@@ -1352,6 +1508,63 @@ bool GUI_DoMessage(TMessageBoard *Am)
 	
 	switch (Am->IDMessage)
 	{
+	case IM_FREEPTR:
+	{
+		FREEPTR(GUI_menuhandle0_main);
+		res = true;
+		break;
+	}
+	case IM_LOAD_CONFIGURATION:
+	{
+		GUI_LoadConfiguration();
+		res = true;
+		break;
+	}
+	case IM_SAVE_CONFIGURATION:
+	{
+		GUI_SaveConfiguration(coAll);
+		res = true;
+		break;
+	}
+
+	case IM_RESET_CONFIGURATION:
+	{
+		GUI_ResetConfiguration();
+		res = true;
+		break;
+	}
+
+
+	case IM_MENU:
+	{
+		OPEN_MAINMENU()
+		{
+			GUI_menuhandle0_main = GUIGADGET_CreateMenu(&XB_GUI_DefTask, 0,false,X,Y);
+		}
+
+
+		BEGIN_MENU(0, "GUI", WINDOW_POS_X_DEF, WINDOW_POS_Y_DEF, 32, MENU_AUTOCOUNT, 0, true)
+		{
+			BEGIN_MENUITEM("Snapshot all windows pos.", taLeft)
+			{
+				CLICK_MENUITEM()
+				{
+					board.Log("Save All Windows Position...", true, true);
+					GUI_SaveConfiguration(coAllWindowsPos);
+					board.Log("OK");
+				}
+			}
+			END_MENUITEM()
+			SEPARATOR_MENUITEM()
+			CONFIGURATION_MENUITEMS()
+		}
+		END_MENU()
+
+
+		res = true;
+		break;
+	}
+
 	case IM_KEYBOARD:
 	{
 		switch (Am->Data.KeyboardData.KeyFunction)
@@ -1370,9 +1583,10 @@ bool GUI_DoMessage(TMessageBoard *Am)
 				{
 					if (w->EscapeClose)				
 					{
-						GUI_WindowDestroy(&w);
-						GUI_ClearDesktop();
-						GUI_RepaintAllWindows();
+						w->Close();
+						//GUI_WindowDestroy(&w);
+						//GUI_ClearDesktop();
+						//GUI_RepaintAllWindows();
 						res=true;
 					}
 				}
@@ -1508,22 +1722,13 @@ bool GUI_DoMessage(TMessageBoard *Am)
 	}
 	case IM_GET_TASKNAME_STRING:
 	{
-		*(Am->Data.PointerString) = FSS("GUI");
+		GET_TASKNAME("GUI");
 		res = true;
 		break;
 	}
 	case IM_GET_TASKSTATUS_STRING:
 	{
-		{
-			uint8_t w_count = 0;
-			TWindowClass *wc = WindowsList;
-			while (wc != NULL)
-			{
-				w_count++;
-				wc = wc->Next;
-			}
-			*(Am->Data.PointerString) = "Wc("+String(w_count)+")   ";			
-		}
+		GET_TASKSTATUS_ADDSTR("Wc(" + String(WindowsList_count) + ")   ");
 		res= true;
 		break;
 	}

@@ -62,6 +62,8 @@ public:
 	TWindowRect WindowRect; // pozycja okna wyliczona z X,Y,Width,Height
 	TBorderSize BorderSize;
 
+	bool DoClose;
+	void Close();
 
 	TPoint CursorXY;
 	char ClearChar;
@@ -73,12 +75,12 @@ public:
 	TWindowClass *ModalWin;
 	
 
-	int8_t RepaintCounter;
-	int8_t RepaintDataCounter;
-	int8_t RepaintBorderCounter;
+	int16_t RepaintCounter;
+	int16_t RepaintDataCounter;
+	int16_t RepaintBorderCounter;
 
-	int8_t isBeginDraw;
-	int8_t PaintOnBorder;
+	int16_t isBeginDraw;
+	int16_t PaintOnBorder;
 
 	TTextForegroundColor TextColor;
 	TTextBackgroundColor TextBackgroundColor;

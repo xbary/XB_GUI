@@ -199,7 +199,17 @@ if (Am->Data.MenuData.ActionData.MenuItemData.ItemIndex == 255) \
 					board.Log(".OK"); \
 				} \
 			} \
-			END_MENUITEM() 
+			END_MENUITEM() \
+			BEGIN_MENUITEM("Reset configuration", taLeft) \
+			{ \
+				CLICK_MENUITEM() \
+				{ \
+					board.Log("Reset configuration..", true, true); \
+					board.ResetConfiguration(); \
+					board.Log(".OK"); \
+				} \
+			} \
+			END_MENUITEM()
 
 
 #define BEGIN_MENUITEM_CHECKED(Aname,Atextalignment,Aboolvalue) \
