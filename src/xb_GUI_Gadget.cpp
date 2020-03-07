@@ -628,6 +628,32 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 								}
 							}
 						}
+						else if (id->TypeInputVar == tivInt16)
+						{
+						if ((((char)Ams->Data.KeyboardData.KeyCode >= '0') && ((char)Ams->Data.KeyboardData.KeyCode <= '9')))
+						{
+							ch = (char)Ams->Data.KeyboardData.KeyCode;
+						}
+						else if (((char)Ams->Data.KeyboardData.KeyCode == '-'))
+						{
+							int c = 0;
+							{
+								int i = 0;
+								while (i < id->EditVar.length())
+								{
+									if (id->EditVar.charAt(i) == '-') c++;
+									i++;
+								}
+							}
+							if (c == 0)
+							{
+								if (id->CursorPosInputVar == 0)
+								{
+									ch = (char)Ams->Data.KeyboardData.KeyCode;
+								}
+							}
+						}
+						}
 						else if (id->TypeInputVar == tiv_udouble)
 						{
 							if ((((char)Ams->Data.KeyboardData.KeyCode >= '0') && ((char)Ams->Data.KeyboardData.KeyCode <= '9')))
@@ -867,6 +893,13 @@ TGADGETInputDialog::TGADGETInputDialog(TTaskDef *AOwnerTaskDef, int8_t AIDInputD
 					MinMax.uint16MinMax = mb.Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint16MinMax;
 					break;
 				}
+			case tivInt16:
+			{
+				InputVar.Int16 = (int16_t*)mb.Data.InputDialogData.ActionData.InputDialogInitData.DataPointer;
+				EditVar = String((int16_t)(*InputVar.Int16));
+				MinMax.int16MinMax = mb.Data.InputDialogData.ActionData.InputDialogInitData.MinMax.int16MinMax;
+				break;
+			}
 			case tivUInt8:
 				{
 					InputVar.uInt8 = (uint8_t *)mb.Data.InputDialogData.ActionData.InputDialogInitData.DataPointer;
@@ -992,6 +1025,21 @@ void TGADGETInputDialog::EnterVAR()
 		if ((v >= MinMax.uint16MinMax.Min) && (v <= MinMax.uint16MinMax.Max))
 		{
 			*InputVar.uInt16 = v; 
+		}
+		else
+		{
+			board.Log("Input Value is out of range...", true, true, tlError);
+		}
+		break;
+	}
+	case tivInt16:
+	{
+		long vv = 0;
+		vv = EditVar.toInt();
+		int16_t v = (int16_t)vv;
+		if ((v >= MinMax.int16MinMax.Min) && (v <= MinMax.int16MinMax.Max))
+		{
+			*InputVar.Int16 = v;
 		}
 		else
 		{
@@ -1148,6 +1196,29 @@ void TGADGETInputDialog::PaintVar()
 				WindowClass->SetTextColor(tfcRed);
 			}
 		}
+
+		if (TypeInputVar == tivInt16)
+		{
+			long vv = 0;
+			vv=EditVar.toInt();
+			if ((vv > 32767) || (vv < -32768))
+			{
+				WindowClass->SetTextColor(tfcRed);
+			}
+			else
+			{
+				int16_t v = (int16_t)vv;
+				if ((v >= MinMax.int16MinMax.Min) && (v <= MinMax.int16MinMax.Max))
+				{
+					WindowClass->SetTextColor(tfcYellow);
+				}
+				else
+				{
+					WindowClass->SetTextColor(tfcRed);
+				}
+			}
+		}
+
 
 		if (TypeInputVar == tivUInt8)
 		{
@@ -1695,6 +1766,7 @@ void TGADGETMenu::ClickItemMenu(uint8_t Aclickitem)
 			mb.Data.MenuData.IDMenu = IDMenu;
 			mb.Data.MenuData.ActionData.MenuClickData.ItemIndex = Aclickitem;
 			mb.Data.MenuData.ActionData.MenuClickData.Close = false;
+			mb.Data.MenuData.ActionData.MenuClickData.Repaint = false;
 			board.DoMessage(&mb, true, NULL, OwnerTaskDef);
 
 			if (WindowClass != NULL)
@@ -1707,6 +1779,10 @@ void TGADGETMenu::ClickItemMenu(uint8_t Aclickitem)
 					GUI_WindowDestroy(&WindowClass);
 					GUI_ClearDesktop();
 					GUI_RepaintAllWindows();
+				}
+				if (mb.Data.MenuData.ActionData.MenuClickData.Repaint)
+				{
+					GUIGADGET_RepaintMenu(this);
 				}
 			}
 		}

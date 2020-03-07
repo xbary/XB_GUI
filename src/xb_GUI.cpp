@@ -223,8 +223,6 @@ TWindowClass::TWindowClass(TTaskDef *ATaskDef, int8_t AWindowID, bool Aactive, b
 			mb.Data.WindowData.ActionData.Create.X=X;
 			mb.Data.WindowData.ActionData.Create.Y=Y;
 			SetWindowPositionFrom(&mb.Data.WindowData);
-			
-
 
 			if (Aactive)
 			{

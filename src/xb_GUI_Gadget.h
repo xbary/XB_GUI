@@ -94,6 +94,7 @@ public:
 	{
 		Tuint32MinMax uint32MinMax;
 		Tuint16MinMax uint16MinMax;
+		Tint16MinMax int16MinMax;
 		Tuint8MinMax uint8MinMax;
 	} MinMax;
 	
@@ -182,7 +183,7 @@ if (Am->Data.MenuData.ActionData.MenuItemData.ItemIndex == 255) \
 #define CONFIGURATION_MENUITEMS() \
 			BEGIN_MENUITEM("Load configuration", taLeft) \
 			{ \
-				CLICK_MENUITEM() \
+				CLICK_MENUITEM_REPAINT() \
 				{ \
 					board.Log("Load configuration..", true, true); \
 					board.LoadConfiguration(); \
@@ -202,7 +203,7 @@ if (Am->Data.MenuData.ActionData.MenuItemData.ItemIndex == 255) \
 			END_MENUITEM() \
 			BEGIN_MENUITEM("Reset configuration", taLeft) \
 			{ \
-				CLICK_MENUITEM() \
+				CLICK_MENUITEM_REPAINT() \
 				{ \
 					board.Log("Reset configuration..", true, true); \
 					board.ResetConfiguration(); \
@@ -260,6 +261,13 @@ if (Am->Data.MenuData.ActionData.MenuItemData.ItemIndex == 255) \
 	if (Am->Data.MenuData.TypeMenuAction == tmaCLICK_ITEM_MENU) \
 	{ \
 		CurrentItemIndex = Am->Data.MenuData.ActionData.MenuClickData.ItemIndex; \
+		if (CurrentItemIndex==ItemIndex) 
+
+#define CLICK_MENUITEM_REPAINT() } \
+	if (Am->Data.MenuData.TypeMenuAction == tmaCLICK_ITEM_MENU) \
+	{ \
+		CurrentItemIndex = Am->Data.MenuData.ActionData.MenuClickData.ItemIndex; \
+		if (CurrentItemIndex==ItemIndex) Am->Data.MenuData.ActionData.MenuClickData.Repaint = true; \
 		if (CurrentItemIndex==ItemIndex) 
 
 #define CLICKLEFT_MENUITEM() } \
@@ -357,6 +365,11 @@ if (Am->Data.InputDialogData.TypeInputDialogAction==ida_INIT_INPUTDIALOG) \
 	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint32MinMax.Min = Amin; \
 	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint32MinMax.Max = Amax; \
 	} \
+	else if (ATypeInputVar == tivInt16) \
+	{ \
+	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.int16MinMax.Min = Amin; \
+	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.int16MinMax.Max = Amax; \
+	} \
 } \
 else if (Am->Data.InputDialogData.TypeInputDialogAction == ida_GET_CAPTION_STRING) \
 { \
@@ -374,53 +387,6 @@ else \
 #define EVENT_ESCAPE() if (Am->Data.InputDialogData.TypeInputDialogAction==ida_ESCAPE_DIALOG)
 
 #define END_DIALOG() }}
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-#define BEGIN_INPUTDIALOGINIT(iddialog) if ((Am->Data.InputDialogData.TypeInputDialogAction==ida_INIT_INPUTDIALOG) && (Am->Data.InputDialogData.IDInputDialog==iddialog)) \
-{ 
-
-#define DEF_INPUTDIALOGINIT(ATypeInputVar,AMaxLength,ADataPointer) \
-{ \
-Am->Data.InputDialogData.ActionData.InputDialogInitData.TypeInputVar = ATypeInputVar; \
-Am->Data.InputDialogData.ActionData.InputDialogInitData.MaxLength = AMaxLength; \
-Am->Data.InputDialogData.ActionData.InputDialogInitData.DataPointer = ADataPointer; \
-}
-
-#define	DEF_INPUTDIALOGINIT_MINMAX_UINT32(Amin,Amax) \
-{ \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint32MinMax.Min = Amin; \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint32MinMax.Max = Amax; \
-} 
-
-#define	DEF_INPUTDIALOGINIT_MINMAX_UINT16(Amin,Amax) \
-{ \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint16MinMax.Min = Amin; \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint16MinMax.Max = Amax; \
-} 
-
-#define	DEF_INPUTDIALOGINIT_MINMAX_UINT8(Amin,Amax) \
-{ \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint8MinMax.Min = Amin; \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint8MinMax.Max = Amax; \
-} 
-
-#define END_INPUTDIALOGINIT() \
-}
-
-#define BEGIN_INPUTDIALOGCAPTION(idinputdialog) if ((Am->Data.InputDialogData.TypeInputDialogAction==ida_GET_CAPTION_STRING) && (Am->Data.InputDialogData.IDInputDialog==idinputdialog)) {
-#define DEF_INPUTDIALOGCAPTION(caption) *(Am->Data.InputDialogData.ActionData.InputDialogCaptionData.PointerString) = caption;
-#define END_INPUTDIALOGCAPTION() }
-
-#define BEGIN_INPUTDIALOGDESCRIPTION(idinputdialog) if ((Am->Data.InputDialogData.TypeInputDialogAction==ida_GET_DESCRIPTION_STRING) && (Am->Data.InputDialogData.IDInputDialog==idinputdialog)) {
-#define DEF_INPUTDIALOGDESCRIPTION(description) *(Am->Data.InputDialogData.ActionData.InputDialogDescriptionData.PointerString) = description;
-#define END_INPUTDIALOGDESCRIPTION() }
-
-#define BEGIN_INPUTDIALOG_ENTER(idinputdialog) if ((Am->Data.InputDialogData.TypeInputDialogAction==ida_ENTER_DIALOG) && (Am->Data.InputDialogData.IDInputDialog==idinputdialog)) {
-#define END_INPUTDIALOG_ENTER() }
-
-#define BEGIN_INPUTDIALOG_ESCAPE(idinputdialog) if ((Am->Data.InputDialogData.TypeInputDialogAction==ida_ESCAPE_DIALOG) && (Am->Data.InputDialogData.IDInputDialog==idinputdialog)) {
-#define END_INPUTDIALOG_ESCAPE() }
 
 #endif	
 #endif
