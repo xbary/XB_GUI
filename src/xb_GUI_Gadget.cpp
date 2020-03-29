@@ -1472,6 +1472,7 @@ TGADGETMenu *GUIGADGET_FindMenuByOwnerTaskDef(TTaskDef *ATaskDef,uint8_t AIDMenu
 TGADGETMenu *GUIGADGET_CreateMenu(TTaskDef *AOwnerTaskDef,int8_t AIDMenu,bool Amodal,int16_t Ax, int16_t Ay)
 {
 	TGADGETMenu *m = GUIGADGET_FindMenuByOwnerTaskDef(AOwnerTaskDef,AIDMenu);
+
 	if (m != NULL)
 	{
 		if (m->MenuIsInit)	
@@ -1489,7 +1490,7 @@ TGADGETMenu *GUIGADGET_CreateMenu(TTaskDef *AOwnerTaskDef,int8_t AIDMenu,bool Am
 	{
 		m = new TGADGETMenu(AOwnerTaskDef, AIDMenu, Amodal,Ax,Ay);
 	}
-
+	
 	if (!m->MenuIsInit)	
 	{
 		GUIGADGET_DestroyMenu(&m);
@@ -1536,6 +1537,7 @@ bool TGADGETMenu::DoMenuInit()
 	res = board.DoMessage(&mb, true, NULL, OwnerTaskDef);
 	if (res)
 	{
+
 		if (mb.Data.MenuData.ActionData.MenuInitData.X == WINDOW_POS_X_DEF)
 			mb.Data.MenuData.ActionData.MenuInitData.X = X;
 
@@ -1614,7 +1616,6 @@ TGADGETMenu::TGADGETMenu(TTaskDef *AOwnerTaskDef, int8_t AIDMenu,bool Amodal, in
 {
 #ifdef XB_GUI
 	ADD_TO_LIST(GADGETMenusList, TGADGETMenu);
-
 	OwnerTaskDef = AOwnerTaskDef;
 	IDMenu = AIDMenu;
 	WindowClass = NULL;
@@ -1624,6 +1625,7 @@ TGADGETMenu::TGADGETMenu(TTaskDef *AOwnerTaskDef, int8_t AIDMenu,bool Amodal, in
 	CurrentItem = 0;
 	X = Ax;
 	Y = Ay;
+	
 	MenuIsInit = DoMenuInit();
 	if (!MenuIsInit)
 	{

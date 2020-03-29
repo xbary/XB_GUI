@@ -1063,6 +1063,7 @@ void GUI_WindowDestroy(TWindowClass **Awindowclass)
 			if (*Awindowclass!=NULL)
 			delete(*Awindowclass);
 			board.SendMessage_FreePTR(*Awindowclass);
+			*Awindowclass = NULL;
 			
 
 			{
@@ -1509,6 +1510,7 @@ bool GUI_DoMessage(TMessageBoard *Am)
 	case IM_FREEPTR:
 	{
 		FREEPTR(GUI_menuhandle0_main);
+		FREEPTR(CurrentWindowRepaint);
 		res = true;
 		break;
 	}

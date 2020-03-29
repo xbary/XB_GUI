@@ -290,6 +290,8 @@ if (Am->Data.MenuData.ActionData.MenuItemData.ItemIndex == 255) \
 		if (CurrentItemIndex==ItemIndex) Am->Data.MenuData.ActionData.MenuClickData.Close = true; \
 		if (CurrentItemIndex==ItemIndex) 
 
+#define CLOSE_MENU(Aclose) Am->Data.MenuData.ActionData.MenuClickData.Close = Aclose; 
+
 #define DELETE_MENUITEM() } \
 	if (Am->Data.MenuData.TypeMenuAction == tmaDEL_ITEM_MENU) \
 	{ \
