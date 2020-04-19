@@ -1383,17 +1383,17 @@ uint32_t GUI_DoLoop(void)
 			break;
 		}
 		
-		if (CurrentWindowRepaint->RepaintCounter > 0)
+		if (CurrentWindowRepaint->RepaintBorderCounter > 0)
+		{
+			WindowRepaintStep = wrsRepaintWindowBorder;
+		}
+		else if (CurrentWindowRepaint->RepaintCounter > 0)
 		{
 			WindowRepaintStep = wrsRepaintWindowStep1;
 		}
 		else if (CurrentWindowRepaint->RepaintDataCounter > 0)
 		{
 			WindowRepaintStep = wrsRepaintWindowData;
-		}
-		else if (CurrentWindowRepaint->RepaintBorderCounter > 0)
-		{
-			WindowRepaintStep = wrsRepaintWindowBorder;
 		}
 		else if (DoClearDesktop)
 		{
@@ -1473,7 +1473,8 @@ uint32_t GUI_DoLoop(void)
 		CurrentWindowRepaint->DoRepaintData();
 		CurrentWindowRepaint->EndDraw();
 		CurrentWindowRepaint->RepaintDataCounter = 0;
-		WindowRepaintStep = wrsCheckRepaint;
+		WindowRepaintStep = wrsNext;
+		//WindowRepaintStep = wrsCheckRepaint;
 
 		board.NoTxCounter--;
 		break;
