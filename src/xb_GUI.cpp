@@ -922,8 +922,8 @@ void TWindowClass::SetWindowSize(Tx Awidth, Ty Aheight)
 	if (Aheight < Height) aclear = true;
 	Width = Awidth;
 	Height = Aheight;
-	WindowRect.Right = WindowRect.Left + Width;
-	WindowRect.Bottom = WindowRect.Top + Height;
+	WindowRect.Right = WindowRect.Left + Width-1;
+	WindowRect.Bottom = WindowRect.Top + Height-1;
 	if (aclear)
 	{
 		GUI_ClearDesktop();
@@ -1232,7 +1232,6 @@ void GUI_Setup(void)
 	ScreenText.SetForegroundColor(tfcDefault);
 	
 	board.AddTask(&XB_GUIGADGET_DefTask);
-	
 }
 
 uint32_t GUI_DoLoop(void)
