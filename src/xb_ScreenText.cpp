@@ -173,7 +173,8 @@ bool TScreenTextClass::GotoXY(int16_t Ax, int16_t Ay)
 			{
 				if ((RealCurrentY >= 0) && (RealCurrentX >= 0))
 				{
-					char cbuf[16] = "\033[";
+					char cbuf[16]; xb_memoryfill(cbuf, 16, 0);
+					strcpy(cbuf,"\033[");
 					uint8_t i = strlen(cbuf);
 					i += inttoa(RealCurrentY + 1, &cbuf[i]);
 					cbuf[i++] = ';';
@@ -264,7 +265,8 @@ void TScreenTextClass::SetForegroundColor(TTextForegroundColor ATextForegroundCo
 		CurrentForegroundColor = ATextForegroundColor;
 		uint32_t ltx = board.TXCounter;
 		{
-			char cbuf[16] = "\033[3";
+			char cbuf[16]; xb_memoryfill(cbuf, 16, 0);
+			strcpy(cbuf, "\033[3");
 			uint8_t i = strlen(cbuf);
 			i += inttoa(ATextForegroundColor, &cbuf[i]);
 			cbuf[i++] = 'm';
@@ -285,7 +287,8 @@ void TScreenTextClass::SetBackgroundColor(TTextBackgroundColor ATextBackgroundCo
 		CurrentBackgroundColor = ATextBackgroundColor;
 		uint32_t ltx = board.TXCounter;
 		{
-			char cbuf[16] = "\033[4";
+			char cbuf[16]; xb_memoryfill(cbuf, 16, 0);
+			strcpy(cbuf, "\033[4");
 			uint8_t i = strlen(cbuf);
 			i += inttoa(ATextBackgroundColor, &cbuf[i]);
 			cbuf[i++] = 'm';
