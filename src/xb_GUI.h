@@ -108,6 +108,7 @@ public:
 	void PutStr(const char *Astr, Tx Awidth = 0, char Achfill = ' ', TTextAlignment Atextalignment = taLeft);
 	void SetActive(void);
 	void DoRepaint();
+	void RepaintData();
 	void DoRepaintData();
 	void Repaint();
 	void PaintBorder();
@@ -122,7 +123,7 @@ TWindowClass *GUI_FindWindowByTaskDef(TTaskDef *ATaskDef, int8_t AWindowID);
 TWindowClass *GUI_FindWindowByActive();
 TWindowClass *GUI_WindowCreate(TTaskDef *ATaskDef, int8_t AWindowID = -1, bool Aactive = true, TWindowClass *Amodalwin = NULL, bool Aescapeclose=true, Tx Ax=WINDOW_POS_X_CENTER, Ty Ay= WINDOW_POS_Y_CENTER);
 void GUI_WindowDestroy(TWindowClass **Awindowclass);
-void GUI_RepaintAllWindows(void);
+void GUI_RepaintAllWindows();
 void GUI_Hide(void);
 void GUI_Show(void);
 void GUI_ClearScreen(void);
@@ -131,12 +132,8 @@ bool GUI_XYisShow(Tx Ax, Ty Ay);
 int GUI_GetHeightDesktop(void);
 int GUI_GetWidthDesktop(void);
 void GUI_ClearDesktop(char Ach=' ');
-extern void GUI_Setup(void);
-extern uint32_t GUI_DoLoop(void);
-extern bool GUI_DoMessage(TMessageBoard *Am);
 
 extern TTaskDef XB_GUI_DefTask;
-
 
 #define BEGIN_WINDOW_DEF(Aid,Acaption,Ax,Ay,Awidth,Aheight,Aptrhandle) \
 if ((Am->Data.WindowData.ID == Aid)) \

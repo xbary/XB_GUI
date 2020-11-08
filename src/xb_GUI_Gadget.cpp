@@ -48,31 +48,25 @@ uint32_t GUIGADGET_Loop(void)
 	return 0;
 }
 
-bool GUIGADGET_Message(TMessageBoard *Ams)
+bool GUIGADGET_Message(TMessageBoard *Am)
 {
 	bool res = false;
 	
-	switch (Ams->IDMessage)
+	switch (Am->IDMessage)
 	{
-	case IM_FREEPTR:
+	case IM_HANDLEPTR:
 	{
 		TGADGETInputDialog* gid = GADGETInputDialogsList;
 		while (gid != NULL)
 		{
-			if (gid->WindowClass == Ams->Data.FreePTR)
-			{
-				gid->WindowClass = NULL;
-			}
+			HANDLEPTR(gid->WindowClass);
 			gid = gid->Next;
 		}
 
 		TGADGETMenu* gm = GADGETMenusList;
 		while (gm != NULL)
 		{
-			if (gm->WindowClass == Ams->Data.FreePTR)
-			{
-				gm->WindowClass = NULL;
-			}
+			HANDLEPTR(gm->WindowClass);
 			gm = gm->Next;
 		}
 
@@ -82,26 +76,26 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 #ifdef XB_GUI
 	case IM_WINDOW:
 	{
-		switch (Ams->Data.WindowData.WindowAction)
+		switch (Am->Data.WindowData.WindowAction)
 		{
 		case waCreate:
 		{
-			TGADGETMenu *m = GUIGADGET_FindMenuByIDWindow(Ams->Data.WindowData.ID);
+			TGADGETMenu *m = GUIGADGET_FindMenuByIDWindow(Am->Data.WindowData.ID);
 			if (m != NULL)
 			{
 				int16_t xt = (GUI_GetWidthDesktop() / 2) - (m->WidthItems / 2);
 				if (xt < 0) xt = 0;
 				int16_t yt = (GUI_GetHeightDesktop() / 2) - ((m->ItemCount + 2) / 2);
 				if (yt < 0) yt = 0;
-				Ams->Data.WindowData.ActionData.Create.X = WINDOW_POS_X_DEF;
-				Ams->Data.WindowData.ActionData.Create.Y = WINDOW_POS_Y_DEF;
-				Ams->Data.WindowData.ActionData.Create.Width = m->WidthItems + 2;
-				Ams->Data.WindowData.ActionData.Create.Height = m->ItemCount + 2;
+				Am->Data.WindowData.ActionData.Create.X = WINDOW_POS_X_DEF;
+				Am->Data.WindowData.ActionData.Create.Y = WINDOW_POS_Y_DEF;
+				Am->Data.WindowData.ActionData.Create.Width = m->WidthItems + 2;
+				Am->Data.WindowData.ActionData.Create.Height = m->ItemCount + 2;
 				res = true;
 				break;
 			}
 
-			TGADGETInputDialog *id = GUIGADGET_FindInputDialogByIDWindow(Ams->Data.WindowData.ID);
+			TGADGETInputDialog *id = GUIGADGET_FindInputDialogByIDWindow(Am->Data.WindowData.ID);
 			if (id != NULL)
 			{
 
@@ -116,10 +110,10 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 				if (xt < 0) xt = 0;
 				int16_t yt = (GUI_GetHeightDesktop() / 2) - ((h + 2) / 2);
 				if (yt < 0) yt = 0;
-				Ams->Data.WindowData.ActionData.Create.X = WINDOW_POS_X_DEF;
-				Ams->Data.WindowData.ActionData.Create.Y = WINDOW_POS_Y_DEF;
-				Ams->Data.WindowData.ActionData.Create.Width = w + 2;
-				Ams->Data.WindowData.ActionData.Create.Height = h + 2;
+				Am->Data.WindowData.ActionData.Create.X = WINDOW_POS_X_DEF;
+				Am->Data.WindowData.ActionData.Create.Y = WINDOW_POS_Y_DEF;
+				Am->Data.WindowData.ActionData.Create.Width = w + 2;
+				Am->Data.WindowData.ActionData.Create.Height = h + 2;
 				res = true;
 				break;
 			}
@@ -128,7 +122,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 		}
 		case waDestroy:
 		{
-			TGADGETMenu *m = GUIGADGET_FindMenuByIDWindow(Ams->Data.WindowData.ID);
+			TGADGETMenu *m = GUIGADGET_FindMenuByIDWindow(Am->Data.WindowData.ID);
 			if (m != NULL)
 			{
 				// oznajmienie zadania ¿e jego okno zosta³o skasowane
@@ -137,7 +131,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 				break;
 			}
 
-			TGADGETInputDialog *id = GUIGADGET_FindInputDialogByIDWindow(Ams->Data.WindowData.ID);
+			TGADGETInputDialog *id = GUIGADGET_FindInputDialogByIDWindow(Am->Data.WindowData.ID);
 			if (id != NULL)
 			{
 				GUIGADGET_DestroyInputDialog(&id);
@@ -149,18 +143,18 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 		}
 		case waGetCaptionWindow:
 		{
-			TGADGETMenu *m = GUIGADGET_FindMenuByIDWindow(Ams->Data.WindowData.ID);
+			TGADGETMenu *m = GUIGADGET_FindMenuByIDWindow(Am->Data.WindowData.ID);
 			if (m != NULL)
 			{
-				m->GetCaptionMenuString(*(Ams->Data.WindowData.ActionData.GetCaption.PointerString));
+				m->GetCaptionMenuString(*(Am->Data.WindowData.ActionData.GetCaption.PointerString));
 				res = true;
 				break;
 			}
 
-			TGADGETInputDialog *id = GUIGADGET_FindInputDialogByIDWindow(Ams->Data.WindowData.ID);
+			TGADGETInputDialog *id = GUIGADGET_FindInputDialogByIDWindow(Am->Data.WindowData.ID);
 			if (id != NULL)
 			{
-				id->GetCaptionInputDialogString(*(Ams->Data.WindowData.ActionData.GetCaption.PointerString));
+				id->GetCaptionInputDialogString(*(Am->Data.WindowData.ActionData.GetCaption.PointerString));
 				res = true;
 				break;
 			}
@@ -169,7 +163,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 		}
 		case waRepaint:
 		{
-			TGADGETMenu *m = GUIGADGET_FindMenuByIDWindow(Ams->Data.WindowData.ID);
+			TGADGETMenu *m = GUIGADGET_FindMenuByIDWindow(Am->Data.WindowData.ID);
 			if (m != NULL)
 			{
 				if (m->WindowClass != NULL)
@@ -181,7 +175,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 				break;
 			}
 
-			TGADGETInputDialog *id = GUIGADGET_FindInputDialogByIDWindow(Ams->Data.WindowData.ID);
+			TGADGETInputDialog *id = GUIGADGET_FindInputDialogByIDWindow(Am->Data.WindowData.ID);
 			if (id != NULL)
 			{
 				if (id->WindowClass != NULL)
@@ -202,7 +196,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 		}
 		case waRepaintData:
 		{
-			TGADGETMenu *m = GUIGADGET_FindMenuByIDWindow(Ams->Data.WindowData.ID);
+			TGADGETMenu *m = GUIGADGET_FindMenuByIDWindow(Am->Data.WindowData.ID);
 			if (m != NULL)
 			{
 				if (m->WindowClass != NULL)
@@ -323,7 +317,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 				break;
 			}
 
-			TGADGETInputDialog *id = GUIGADGET_FindInputDialogByIDWindow(Ams->Data.WindowData.ID);
+			TGADGETInputDialog *id = GUIGADGET_FindInputDialogByIDWindow(Am->Data.WindowData.ID);
 			if (id != NULL)
 			{
 				id->PaintVar();
@@ -343,7 +337,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 	{
 #ifdef XB_GUI
 		
-		if (Ams->Data.KeyboardData.TypeKeyboardAction == tkaKEYPRESS)
+		if (Am->Data.KeyboardData.TypeKeyboardAction == tkaKEYPRESS)
 		{
 			TWindowClass *w = GUI_FindWindowByActive();
 			if (w == NULL) break;
@@ -351,7 +345,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 			if (m != NULL)
 			{
 
-				switch (Ams->Data.KeyboardData.KeyFunction)
+				switch (Am->Data.KeyboardData.KeyFunction)
 				{
 				case KF_CURSORUP:
 				{
@@ -414,7 +408,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 				case KF_ENTER:
 				{
 			
-					Ams->Data.KeyboardData.KeyFunction = KF_NONE;
+					Am->Data.KeyboardData.KeyFunction = KF_NONE;
 					m->ClickItemMenu(m->CurrentItem);
 					
 					res = true;
@@ -423,7 +417,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 				case KF_CURSORLEFT:
 				{
 
-					Ams->Data.KeyboardData.KeyFunction = KF_NONE;
+					Am->Data.KeyboardData.KeyFunction = KF_NONE;
 					m->ClickLeftItemMenu(m->CurrentItem);
 
 					res = true;
@@ -432,7 +426,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 				case KF_CURSORRIGHT:
 				{
 
-					Ams->Data.KeyboardData.KeyFunction = KF_NONE;
+					Am->Data.KeyboardData.KeyFunction = KF_NONE;
 					m->ClickRightItemMenu(m->CurrentItem);
 
 					res = true;
@@ -441,7 +435,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 				case KF_DELETE:
 				{
 			
-					Ams->Data.KeyboardData.KeyFunction = KF_NONE;
+					Am->Data.KeyboardData.KeyFunction = KF_NONE;
 					m->DeleteItemMenu(m->CurrentItem);
 					
 					res = true;
@@ -457,7 +451,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 			{
 				if (id->WindowClass != NULL)
 				{
-					switch (Ams->Data.KeyboardData.KeyFunction)
+					switch (Am->Data.KeyboardData.KeyFunction)
 					{
 					case KF_CURSORLEFT:
 					{
@@ -490,7 +484,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 					}
 					case KF_ENTER:
 					{
-						Ams->Data.KeyboardData.KeyFunction = KF_NONE;
+						Am->Data.KeyboardData.KeyFunction = KF_NONE;
 						id->EnterVAR();
 						id->SendEnterMessageToOwnerTask();
 						GUI_WindowDestroy(&id->WindowClass);
@@ -500,7 +494,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 					}
 					case KF_ESC:
 					{
-						Ams->Data.KeyboardData.KeyFunction = KF_NONE;
+						Am->Data.KeyboardData.KeyFunction = KF_NONE;
 						id->SendEscapeMessageToOwnerTask();
 						GUI_WindowDestroy(&id->WindowClass);
 						GUI_ClearDesktop();
@@ -513,40 +507,40 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 
 						if ((id->TypeInputVar == tivDynArrayChar1) || (id->TypeInputVar == tivString))
 						{
-							if ((Ams->Data.KeyboardData.KeyCode >= 32) && (Ams->Data.KeyboardData.KeyCode <= 126))
+							if ((Am->Data.KeyboardData.KeyCode >= 32) && (Am->Data.KeyboardData.KeyCode <= 126))
 							{
-								ch = (char)Ams->Data.KeyboardData.KeyCode;
+								ch = (char)Am->Data.KeyboardData.KeyCode;
 							}
 						}
 						else if (id->TypeInputVar == tivDynArrayChar2)
 						{
-							if ((Ams->Data.KeyboardData.KeyCode >= 33) && (Ams->Data.KeyboardData.KeyCode <= 126))
+							if ((Am->Data.KeyboardData.KeyCode >= 33) && (Am->Data.KeyboardData.KeyCode <= 126))
 							{
-								ch = (char)Ams->Data.KeyboardData.KeyCode;
+								ch = (char)Am->Data.KeyboardData.KeyCode;
 							}
 						}
 						else if (id->TypeInputVar == tivDynArrayChar3)
 						{
-							if (((char)Ams->Data.KeyboardData.KeyCode >= 'a') && ((char)Ams->Data.KeyboardData.KeyCode <= 'z'))
+							if (((char)Am->Data.KeyboardData.KeyCode >= 'a') && ((char)Am->Data.KeyboardData.KeyCode <= 'z'))
 							{
-								ch = (char)Ams->Data.KeyboardData.KeyCode;
+								ch = (char)Am->Data.KeyboardData.KeyCode;
 							}
-							else if (((char)Ams->Data.KeyboardData.KeyCode >= 'A') && ((char)Ams->Data.KeyboardData.KeyCode <= 'Z'))
+							else if (((char)Am->Data.KeyboardData.KeyCode >= 'A') && ((char)Am->Data.KeyboardData.KeyCode <= 'Z'))
 							{
-								ch = (char)Ams->Data.KeyboardData.KeyCode;
+								ch = (char)Am->Data.KeyboardData.KeyCode;
 							}
-							else if (((char)Ams->Data.KeyboardData.KeyCode >= '0') && ((char)Ams->Data.KeyboardData.KeyCode <= '9'))
+							else if (((char)Am->Data.KeyboardData.KeyCode >= '0') && ((char)Am->Data.KeyboardData.KeyCode <= '9'))
 							{
-								ch = (char)Ams->Data.KeyboardData.KeyCode;
+								ch = (char)Am->Data.KeyboardData.KeyCode;
 							}
 						}
 						else if ((id->TypeInputVar == tivIP) || (id->TypeInputVar == tivIP_U32))
 						{
-							if (((char)Ams->Data.KeyboardData.KeyCode >= '0') && ((char)Ams->Data.KeyboardData.KeyCode <= '9'))
+							if (((char)Am->Data.KeyboardData.KeyCode >= '0') && ((char)Am->Data.KeyboardData.KeyCode <= '9'))
 							{
-								ch = (char)Ams->Data.KeyboardData.KeyCode;
+								ch = (char)Am->Data.KeyboardData.KeyCode;
 							}
-							else if ((char)Ams->Data.KeyboardData.KeyCode == '.')
+							else if ((char)Am->Data.KeyboardData.KeyCode == '.')
 							{
 								int c = 0;
 								{
@@ -563,7 +557,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 									{
 										if (id->EditVar.charAt(id->CursorPosInputVar - 1) != '.') 
 										{
-											ch = (char)Ams->Data.KeyboardData.KeyCode;		
+											ch = (char)Am->Data.KeyboardData.KeyCode;		
 										}
 									}
 								}
@@ -571,25 +565,25 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 						}
 						else if ((id->TypeInputVar == tivUInt32) || (id->TypeInputVar == tivUInt16) || (id->TypeInputVar == tivUInt8))
 						{
-							if (((char)Ams->Data.KeyboardData.KeyCode >= '0') && ((char)Ams->Data.KeyboardData.KeyCode <= '9'))
+							if (((char)Am->Data.KeyboardData.KeyCode >= '0') && ((char)Am->Data.KeyboardData.KeyCode <= '9'))
 							{
-								ch = (char)Ams->Data.KeyboardData.KeyCode;
+								ch = (char)Am->Data.KeyboardData.KeyCode;
 							}
 						}
 						else if (id->TypeInputVar == tivUInt8_HEX)
 						{
-							if ((((char)Ams->Data.KeyboardData.KeyCode >= '0') && ((char)Ams->Data.KeyboardData.KeyCode <= '9')) || (((char)Ams->Data.KeyboardData.KeyCode >= 'A') && ((char)Ams->Data.KeyboardData.KeyCode <= 'F')) || (((char)Ams->Data.KeyboardData.KeyCode >= 'a') && ((char)Ams->Data.KeyboardData.KeyCode <= 'f')))
+							if ((((char)Am->Data.KeyboardData.KeyCode >= '0') && ((char)Am->Data.KeyboardData.KeyCode <= '9')) || (((char)Am->Data.KeyboardData.KeyCode >= 'A') && ((char)Am->Data.KeyboardData.KeyCode <= 'F')) || (((char)Am->Data.KeyboardData.KeyCode >= 'a') && ((char)Am->Data.KeyboardData.KeyCode <= 'f')))
 							{
-								ch = (char)Ams->Data.KeyboardData.KeyCode;
+								ch = (char)Am->Data.KeyboardData.KeyCode;
 							}
 						}
 						else if (id->TypeInputVar == tiv_double)
 						{
-							if ((((char)Ams->Data.KeyboardData.KeyCode >= '0') && ((char)Ams->Data.KeyboardData.KeyCode <= '9')))
+							if ((((char)Am->Data.KeyboardData.KeyCode >= '0') && ((char)Am->Data.KeyboardData.KeyCode <= '9')))
 							{
-								ch = (char)Ams->Data.KeyboardData.KeyCode;
+								ch = (char)Am->Data.KeyboardData.KeyCode;
 							}
-							else if (((char)Ams->Data.KeyboardData.KeyCode == '-'))
+							else if (((char)Am->Data.KeyboardData.KeyCode == '-'))
 							{
 								int c = 0;
 								{
@@ -604,11 +598,11 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 								{
 									if (id->CursorPosInputVar == 0)
 									{
-										ch = (char)Ams->Data.KeyboardData.KeyCode;
+										ch = (char)Am->Data.KeyboardData.KeyCode;
 									}
 								}
 							}
-							else if(((char)Ams->Data.KeyboardData.KeyCode == '.'))
+							else if(((char)Am->Data.KeyboardData.KeyCode == '.'))
 							{
 								int c = 0;
 								{
@@ -623,18 +617,18 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 								{
 									if (id->CursorPosInputVar > 0)
 									{
-										ch = (char)Ams->Data.KeyboardData.KeyCode;
+										ch = (char)Am->Data.KeyboardData.KeyCode;
 									}
 								}
 							}
 						}
 						else if (id->TypeInputVar == tivInt16)
 						{
-						if ((((char)Ams->Data.KeyboardData.KeyCode >= '0') && ((char)Ams->Data.KeyboardData.KeyCode <= '9')))
+						if ((((char)Am->Data.KeyboardData.KeyCode >= '0') && ((char)Am->Data.KeyboardData.KeyCode <= '9')))
 						{
-							ch = (char)Ams->Data.KeyboardData.KeyCode;
+							ch = (char)Am->Data.KeyboardData.KeyCode;
 						}
-						else if (((char)Ams->Data.KeyboardData.KeyCode == '-'))
+						else if (((char)Am->Data.KeyboardData.KeyCode == '-'))
 						{
 							int c = 0;
 							{
@@ -649,18 +643,18 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 							{
 								if (id->CursorPosInputVar == 0)
 								{
-									ch = (char)Ams->Data.KeyboardData.KeyCode;
+									ch = (char)Am->Data.KeyboardData.KeyCode;
 								}
 							}
 						}
 						}
 						else if (id->TypeInputVar == tiv_udouble)
 						{
-							if ((((char)Ams->Data.KeyboardData.KeyCode >= '0') && ((char)Ams->Data.KeyboardData.KeyCode <= '9')))
+							if ((((char)Am->Data.KeyboardData.KeyCode >= '0') && ((char)Am->Data.KeyboardData.KeyCode <= '9')))
 							{
-								ch = (char)Ams->Data.KeyboardData.KeyCode;
+								ch = (char)Am->Data.KeyboardData.KeyCode;
 							}
-							else if (((char)Ams->Data.KeyboardData.KeyCode == '.'))
+							else if (((char)Am->Data.KeyboardData.KeyCode == '.'))
 							{
 								int c = 0;
 								{
@@ -675,7 +669,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 								{
 									if (id->CursorPosInputVar > 0)
 									{
-										ch = (char)Ams->Data.KeyboardData.KeyCode;
+										ch = (char)Am->Data.KeyboardData.KeyCode;
 									}
 								}
 							}
@@ -702,7 +696,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 	}
 	case IM_GET_TASKNAME_STRING:
 	{
-		*(Ams->Data.PointerString) = FSS("GUIGADGET");
+		*(Am->Data.PointerString) = FSS("GUIGADGET");
 		res = true;
 		break;
 		
@@ -717,7 +711,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 				m_count++;
 				gm = gm->Next;
 			}
-			*(Ams->Data.PointerString) = "m(" + String(m_count) + ") Id(";			
+			*(Am->Data.PointerString) = "m(" + String(m_count) + ") Id(";			
 		}
 		
 		{
@@ -728,7 +722,7 @@ bool GUIGADGET_Message(TMessageBoard *Ams)
 				id_count++;
 				gid = gid->Next;
 			}
-			*(Ams->Data.PointerString) = *(Ams->Data.PointerString) + String(id_count) + ")  ";			
+			*(Am->Data.PointerString) = *(Am->Data.PointerString) + String(id_count) + ")  ";			
 		}
 		
 		
@@ -803,7 +797,7 @@ void GUIGADGET_DestroyInputDialog(TGADGETInputDialog **Amenu)
 {
 	if (*Amenu != NULL)
 	{
-		board.SendMessage_FreePTR(*Amenu);
+		board.SendMessage_FREEPTR(Amenu);
 		delete(*Amenu);
 		*Amenu = NULL;
 	}
@@ -1506,7 +1500,7 @@ void GUIGADGET_DestroyMenu(TGADGETMenu **Amenu)
 	{
 		if (*Amenu != NULL)
 		{
-			board.SendMessage_FreePTR(*Amenu);
+			board.SendMessage_FREEPTR(Amenu);
 			delete(*Amenu);
 			*Amenu = NULL;
 		}

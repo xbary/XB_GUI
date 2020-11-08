@@ -6,11 +6,12 @@
 
 TGADGETMenu* GUI_menuhandle0_main;
 
-TTaskDef XB_GUI_DefTask = {3, &GUI_Setup,&GUI_DoLoop,&GUI_DoMessage};
 DEFLIST_VAR(TWindowClass, WindowsList)
 TWindowClass *CurrentWindowRepaint = NULL;
 TWindowClass *WindowSetActivate = NULL;
 bool DoClearDesktop = false;
+bool GUI_Visible = false;
+
 
 uint32_t GUI_DebugIndx = 0;
 
@@ -243,6 +244,7 @@ TWindowClass::TWindowClass(TTaskDef *ATaskDef, int8_t AWindowID, bool Aactive, b
 
 			RepaintCounter = 1;
 			RepaintDataCounter = 1;
+			board.TriggerInterrupt(&XB_GUI_DefTask);
 
 			{
 				uint16_t w = GUI_GetWidthDesktop() + 1;
@@ -826,6 +828,7 @@ void TWindowClass::SetActive(void)
 		MOVE_STR_TO_ENDLIST(WindowsList, TWindowClass, this);
 		RepaintCounter++;
 		RepaintDataCounter++;
+		board.TriggerInterrupt(&XB_GUI_DefTask);
 	}
 
 }
@@ -844,7 +847,13 @@ void TWindowClass::DoRepaint()
 void TWindowClass::Repaint()
 {
 	RepaintCounter++;
+	board.TriggerInterrupt(&XB_GUI_DefTask);
+}
+
+void TWindowClass::RepaintData()
+{
 	RepaintDataCounter++;
+	board.TriggerInterrupt(&XB_GUI_DefTask);
 }
 
 void TWindowClass::DoRepaintData()
@@ -1011,7 +1020,9 @@ TWindowClass *GUI_WindowCreate(TTaskDef *ATaskDef, int8_t AWindowID, bool Aactiv
 	}
 	else
 	{
-		w->RepaintCounter++;
+		w->Repaint();
+		w->RepaintData();
+		
 	}
 	return w;
 
@@ -1062,7 +1073,7 @@ void GUI_WindowDestroy(TWindowClass **Awindowclass)
 			
 			if (*Awindowclass!=NULL)
 			delete(*Awindowclass);
-			board.SendMessage_FreePTR(*Awindowclass);
+			board.SendMessage_FREEPTR(*Awindowclass);
 			*Awindowclass = NULL;
 			
 
@@ -1091,7 +1102,7 @@ void GUI_WindowDestroy(TWindowClass **Awindowclass)
 	}
 }
 
-void GUI_RepaintAllWindows(void)
+void GUI_RepaintAllWindows()
 {
 	TWindowClass *wl = WindowsList;
 	while (wl != NULL)
@@ -1100,6 +1111,7 @@ void GUI_RepaintAllWindows(void)
 		wl->RepaintDataCounter++;
 		wl = wl->Next;
 	}
+	board.TriggerInterrupt(&XB_GUI_DefTask);
 }
 
 void GUI_Show(void)
@@ -1108,6 +1120,7 @@ void GUI_Show(void)
 	ScreenText.Clear();
 	GUI_RepaintAllWindows();
 	ScreenText.GotoXY(0, ScreenText.DesktopHeight);
+	GUI_Visible = true;
 }
 
 void GUI_Hide(void)
@@ -1115,6 +1128,7 @@ void GUI_Hide(void)
 	WindowRepaintStep = wrsStopRepaint;
 	ScreenText.Clear();
 	GUI_RepaintAllWindows();
+	GUI_Visible = false;
 }
 
 void GUI_ClearScreen(void)
@@ -1226,17 +1240,8 @@ void GUI_ClearDesktop(char Ach)
 	if (WindowRepaintStep == wrsCheckRepaint)
 		WindowRepaintStep = wrsClearDesktop;
 }
-// --------------------------------------------------------------------------------------------------------------
-void GUI_Setup(void)
-{
-	ScreenText.SetCharMode_Normal();
-	ScreenText.SetBackgroundColor(tbcDefault);
-	ScreenText.SetForegroundColor(tfcDefault);
-	
-	board.AddTask(&XB_GUIGADGET_DefTask);
-}
 
-uint32_t GUI_DoLoop(void)
+uint32_t GUI_DoWindowsRepaintStep(void)
 {
 	DEF_WAITMS_VAR(txcountcheck);
 	static uint32_t LastTXCounter = 0;
@@ -1245,7 +1250,7 @@ uint32_t GUI_DoLoop(void)
 	{
 		if (CurrentWindowRepaint->DoClose)
 		{
-			GUI_WindowDestroy((TWindowClass **)&CurrentWindowRepaint);
+			GUI_WindowDestroy((TWindowClass**)&CurrentWindowRepaint);
 			CurrentWindowRepaint = WindowsList;
 			return 0;
 		}
@@ -1268,7 +1273,7 @@ uint32_t GUI_DoLoop(void)
 	}
 	case wrsStartRepaint:
 	{
-		board.TXCounter=0;
+		board.TXCounter = 0;
 
 		CurrentWindowRepaint = WindowsList;
 		if (CurrentWindowRepaint != NULL)
@@ -1284,12 +1289,12 @@ uint32_t GUI_DoLoop(void)
 		ScreenText.GotoXY(0, 0);
 
 		TWindowClass* w = WindowsList;
-		while(w != NULL)
+		while (w != NULL)
 		{
 			w->Close();
 			w = w->Next;
 		}
-		
+
 		WindowRepaintStep = wrsOFF;
 		break;
 	}
@@ -1312,39 +1317,39 @@ uint32_t GUI_DoLoop(void)
 		}
 		END_WAITMS(txcountcheck)
 
-		if (CurrentWindowRepaint != NULL)
-		{
-			CurrentWindowRepaint = CurrentWindowRepaint->Next;
-			while (CurrentWindowRepaint != NULL)
-			{
-				if (CurrentWindowRepaint->IsInit)
-				{
-					WindowRepaintStep = wrsCheckRepaint;
-					break;
-				}
-
-				CurrentWindowRepaint = CurrentWindowRepaint->Next;
-			}
-		}
-		else
-		{
-			CurrentWindowRepaint = WindowsList;
 			if (CurrentWindowRepaint != NULL)
 			{
-				if (CurrentWindowRepaint->IsInit)
+				CurrentWindowRepaint = CurrentWindowRepaint->Next;
+				while (CurrentWindowRepaint != NULL)
 				{
-					WindowRepaintStep = wrsCheckRepaint;
-				}
-				else
-				{
-					WindowRepaintStep = wrsNext;
+					if (CurrentWindowRepaint->IsInit)
+					{
+						WindowRepaintStep = wrsCheckRepaint;
+						break;
+					}
+
+					CurrentWindowRepaint = CurrentWindowRepaint->Next;
 				}
 			}
 			else
 			{
-				WindowRepaintStep = wrsStartRepaint;
+				CurrentWindowRepaint = WindowsList;
+				if (CurrentWindowRepaint != NULL)
+				{
+					if (CurrentWindowRepaint->IsInit)
+					{
+						WindowRepaintStep = wrsCheckRepaint;
+					}
+					else
+					{
+						WindowRepaintStep = wrsNext;
+					}
+				}
+				else
+				{
+					WindowRepaintStep = wrsStartRepaint;
+				}
 			}
-		}
 		break;
 	}
 	case wrsClearDesktop:
@@ -1354,7 +1359,7 @@ uint32_t GUI_DoLoop(void)
 			board.NoTxCounter++;
 
 			DoClearDesktop = false;
-			
+
 			if (WindowsList != NULL)
 			{
 				ScreenText.SaveCursorPosition();
@@ -1365,7 +1370,7 @@ uint32_t GUI_DoLoop(void)
 				XY.X = 0;
 				XY.Y = 0;
 
-						
+
 				for (int y = 0; y < ScreenText.ScreenHeight; y++)
 				{
 					for (int x = 0; x < ScreenText.ScreenWidth; x++)
@@ -1379,7 +1384,7 @@ uint32_t GUI_DoLoop(void)
 			}
 			else
 			{
-				ScreenText.Clear();			
+				ScreenText.Clear();
 			}
 			board.NoTxCounter--;
 		}
@@ -1400,7 +1405,7 @@ uint32_t GUI_DoLoop(void)
 			WindowSetActivate = NULL;
 			break;
 		}
-		
+
 		if (CurrentWindowRepaint->RepaintBorderCounter > 0)
 		{
 			WindowRepaintStep = wrsRepaintWindowBorder;
@@ -1431,7 +1436,7 @@ uint32_t GUI_DoLoop(void)
 			WindowRepaintStep = wrsNext;
 			break;
 		}
-		
+
 		board.NoTxCounter++;
 
 		CurrentWindowRepaint->ClearWindow();
@@ -1453,7 +1458,7 @@ uint32_t GUI_DoLoop(void)
 
 		CurrentWindowRepaint->PaintBorder();
 		//if (CurrentWindowRepaint->RepaintBorderCounter>0) 
-			CurrentWindowRepaint->RepaintBorderCounter=0;
+		CurrentWindowRepaint->RepaintBorderCounter = 0;
 		WindowRepaintStep = wrsRepaintWindowStep3;
 
 		board.NoTxCounter--;
@@ -1472,7 +1477,7 @@ uint32_t GUI_DoLoop(void)
 		CurrentWindowRepaint->BeginDraw();
 		CurrentWindowRepaint->DoRepaint();
 		CurrentWindowRepaint->EndDraw();
-		CurrentWindowRepaint->RepaintCounter=0;
+		CurrentWindowRepaint->RepaintCounter = 0;
 		WindowRepaintStep = wrsRepaintWindowData;
 
 		board.NoTxCounter--;
@@ -1491,7 +1496,7 @@ uint32_t GUI_DoLoop(void)
 		CurrentWindowRepaint->SetNormalChar();
 		CurrentWindowRepaint->DoRepaintData();
 		CurrentWindowRepaint->EndDraw();
-		CurrentWindowRepaint->RepaintDataCounter=0;
+		CurrentWindowRepaint->RepaintDataCounter = 0;
 		WindowRepaintStep = wrsNext;
 		//WindowRepaintStep = wrsCheckRepaint;
 
@@ -1508,8 +1513,8 @@ uint32_t GUI_DoLoop(void)
 		board.NoTxCounter++;
 
 		CurrentWindowRepaint->PaintBorder();
-		
-		CurrentWindowRepaint->RepaintBorderCounter=0;
+
+		CurrentWindowRepaint->RepaintBorderCounter = 0;
 		//WindowRepaintStep = wrsClearDesktop;
 		WindowRepaintStep = wrsCheckRepaint;
 		board.NoTxCounter--;
@@ -1522,17 +1527,37 @@ uint32_t GUI_DoLoop(void)
 	return 0;
 }
 
+// --------------------------------------------------------------------------------------------------------------
+void GUI_Setup(void)
+{
+	ScreenText.SetCharMode_Normal();
+	ScreenText.SetBackgroundColor(tbcDefault);
+	ScreenText.SetForegroundColor(tfcDefault);
+
+	board.AddTask(&XB_GUIGADGET_DefTask);
+}
+
+void GUI_DoInterrupt(void)
+{
+	GUI_DoWindowsRepaintStep();
+}
+
+uint32_t GUI_DoLoop(void)
+{
+	return GUI_DoWindowsRepaintStep();
+}
+
 bool GUI_DoMessage(TMessageBoard *Am)
 {
 	bool res = false;
 	
 	switch (Am->IDMessage)
 	{
-	case IM_FREEPTR:
+	case IM_HANDLEPTR:
 	{
-		FREEPTR(GUI_menuhandle0_main);
-		FREEPTR(CurrentWindowRepaint);
-		FREEPTR(WindowSetActivate);
+		HANDLEPTR(GUI_menuhandle0_main);
+		HANDLEPTR(CurrentWindowRepaint);
+		HANDLEPTR(WindowSetActivate);
 		res = true;
 		break;
 	}
@@ -1548,15 +1573,12 @@ bool GUI_DoMessage(TMessageBoard *Am)
 		res = true;
 		break;
 	}
-
 	case IM_RESET_CONFIGURATION:
 	{
 		GUI_ResetConfiguration();
 		res = true;
 		break;
 	}
-
-
 	case IM_MENU:
 	{
 		OPEN_MAINMENU()
@@ -1586,7 +1608,6 @@ bool GUI_DoMessage(TMessageBoard *Am)
 		res = true;
 		break;
 	}
-
 	case IM_KEYBOARD:
 	{
 		switch (Am->Data.KeyboardData.KeyFunction)
@@ -1750,7 +1771,7 @@ bool GUI_DoMessage(TMessageBoard *Am)
 	}
 	case IM_GET_TASKSTATUS_STRING:
 	{
-		GET_TASKSTATUS_ADDSTR("Wc(" + String(WindowsList_count) + ")   ");
+		GET_TASKSTATUS_ADDSTR("Wc(" + String(WindowsList_count) + ") V("+String(GUI_Visible)+")  ");
 		res= true;
 		break;
 	}
@@ -1759,4 +1780,7 @@ bool GUI_DoMessage(TMessageBoard *Am)
 	return res;
 }
 // --------------------------------------------------------------------------------------------------------------
+
+TTaskDef XB_GUI_DefTask = { 3, &GUI_Setup,&GUI_DoLoop,&GUI_DoMessage,&GUI_DoInterrupt };
+
 #endif
