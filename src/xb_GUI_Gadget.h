@@ -352,25 +352,25 @@ if (Am->Data.InputDialogData.TypeInputDialogAction==ida_INIT_INPUTDIALOG) \
 { \
 	Am->Data.InputDialogData.ActionData.InputDialogInitData.TypeInputVar = ATypeInputVar; \
 	Am->Data.InputDialogData.ActionData.InputDialogInitData.MaxLength = AMaxLength; \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.DataPointer = ADataPointer; \
+	Am->Data.InputDialogData.ActionData.InputDialogInitData.DataPointer =(void *)ADataPointer; \
 	if ((ATypeInputVar==tivUInt8) || (ATypeInputVar==tivUInt8_HEX)) \
 	{ \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint8MinMax.Min = Amin; \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint8MinMax.Max = Amax; \
+	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint8MinMax.Min = (uint8_t)Amin; \
+	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint8MinMax.Max = (uint8_t)Amax; \
 	} else if (ATypeInputVar == tivUInt16) \
 	{ \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint16MinMax.Min = Amin; \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint16MinMax.Max = Amax; \
+	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint16MinMax.Min = (uint16_t)Amin; \
+	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint16MinMax.Max = (uint16_t)Amax; \
 	} \
 	else if (ATypeInputVar == tivUInt32) \
 	{ \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint32MinMax.Min = Amin; \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint32MinMax.Max = Amax; \
+	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint32MinMax.Min = (uint32_t)Amin; \
+	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.uint32MinMax.Max = (uint32_t)Amax; \
 	} \
 	else if (ATypeInputVar == tivInt16) \
 	{ \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.int16MinMax.Min = Amin; \
-	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.int16MinMax.Max = Amax; \
+	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.int16MinMax.Min = (int16_t)Amin; \
+	Am->Data.InputDialogData.ActionData.InputDialogInitData.MinMax.int16MinMax.Max = (int16_t)Amax; \
 	} \
 } \
 else if (Am->Data.InputDialogData.TypeInputDialogAction == ida_GET_CAPTION_STRING) \
