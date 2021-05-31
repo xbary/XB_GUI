@@ -62,7 +62,7 @@ void GUI_LoadConfiguration(TConfigurationOption Aco = coAll, TWindowClass* Awc =
 		if (Awc != NULL)
 		{
 			String tn = "";
-			if (board.SendMessage_GetTaskNameString(Awc->taskdef, tn))
+			if (board.SendMessage_GetTaskNameString(Awc->taskdef, &tn))
 			{
 				tn += "G" + String(Awc->ID);
 
@@ -111,7 +111,7 @@ void GUI_SaveConfiguration(TConfigurationOption Aco, TWindowClass* Awc = NULL)
 		if (Awc != NULL)
 		{
 			String tn = "";
-			if (board.SendMessage_GetTaskNameString(Awc->taskdef, tn))
+			if (board.SendMessage_GetTaskNameString(Awc->taskdef, &tn))
 			{
 				tn += "G" + String(Awc->ID);
 				if (board.PREFERENCES_BeginSection(tn))
@@ -137,7 +137,7 @@ void GUI_ResetConfiguration()
 	while (WC != NULL)
 	{
 		String tn = "";
-		if (board.SendMessage_GetTaskNameString(WC->taskdef, tn))
+		if (board.SendMessage_GetTaskNameString(WC->taskdef, &tn))
 		{
 			tn = tn + "G" + String(WC->ID);
 			if (board.PREFERENCES_BeginSection(tn))
@@ -1246,17 +1246,6 @@ uint32_t GUI_DoWindowsRepaintStep(void)
 	DEF_WAITMS_VAR(txcountcheck);
 	static uint32_t LastTXCounter = 0;
 
-	if (CurrentWindowRepaint != NULL)
-	{
-		if (CurrentWindowRepaint->DoClose)
-		{
-			GUI_WindowDestroy((TWindowClass**)&CurrentWindowRepaint);
-			CurrentWindowRepaint = WindowsList;
-			return 0;
-		}
-
-	}
-
 	switch (WindowRepaintStep)
 	{
 	case wrsOFF:
@@ -1317,39 +1306,23 @@ uint32_t GUI_DoWindowsRepaintStep(void)
 		}
 		END_WAITMS(txcountcheck)
 
-			if (CurrentWindowRepaint != NULL)
-			{
-				CurrentWindowRepaint = CurrentWindowRepaint->Next;
-				while (CurrentWindowRepaint != NULL)
-				{
-					if (CurrentWindowRepaint->IsInit)
-					{
-						WindowRepaintStep = wrsCheckRepaint;
-						break;
-					}
+		if (CurrentWindowRepaint != NULL)
+		{
+			CurrentWindowRepaint = CurrentWindowRepaint->Next;
+		}
+		else
+		{
+			CurrentWindowRepaint = WindowsList;
+		}
 
-					CurrentWindowRepaint = CurrentWindowRepaint->Next;
-				}
-			}
-			else
-			{
-				CurrentWindowRepaint = WindowsList;
-				if (CurrentWindowRepaint != NULL)
-				{
-					if (CurrentWindowRepaint->IsInit)
-					{
-						WindowRepaintStep = wrsCheckRepaint;
-					}
-					else
-					{
-						WindowRepaintStep = wrsNext;
-					}
-				}
-				else
-				{
-					WindowRepaintStep = wrsStartRepaint;
-				}
-			}
+		if (CurrentWindowRepaint != NULL)
+		{
+			WindowRepaintStep = wrsCheckRepaint;
+		}
+		else
+		{
+			WindowRepaintStep = wrsStartRepaint;
+		}
 		break;
 	}
 	case wrsClearDesktop:
@@ -1393,12 +1366,21 @@ uint32_t GUI_DoWindowsRepaintStep(void)
 	}
 	case wrsCheckRepaint:
 	{
+		// Jeœli null aktualne okno to nastêpne
 		if (CurrentWindowRepaint == NULL)
 		{
 			WindowRepaintStep = wrsNext;
 			break;
 		}
 
+		// Jeœli nie zainicjowane to nastêpne
+		if (!CurrentWindowRepaint->IsInit)
+		{
+			WindowRepaintStep = wrsNext;
+			break;
+		}
+
+		// sprawdzenie czy ustawiono adres okna do ustawienia aktywnoœci
 		if (WindowSetActivate != NULL)
 		{
 			WindowSetActivate->SetActive();
@@ -1445,7 +1427,6 @@ uint32_t GUI_DoWindowsRepaintStep(void)
 		board.NoTxCounter--;
 		break;
 	}
-
 	case wrsRepaintWindowStep2: // Rysowanie Ramy
 	{
 		if (CurrentWindowRepaint == NULL)
@@ -1457,7 +1438,6 @@ uint32_t GUI_DoWindowsRepaintStep(void)
 		board.NoTxCounter++;
 
 		CurrentWindowRepaint->PaintBorder();
-		//if (CurrentWindowRepaint->RepaintBorderCounter>0) 
 		CurrentWindowRepaint->RepaintBorderCounter = 0;
 		WindowRepaintStep = wrsRepaintWindowStep3;
 
@@ -1515,15 +1495,23 @@ uint32_t GUI_DoWindowsRepaintStep(void)
 		CurrentWindowRepaint->PaintBorder();
 
 		CurrentWindowRepaint->RepaintBorderCounter = 0;
-		//WindowRepaintStep = wrsClearDesktop;
+
 		WindowRepaintStep = wrsCheckRepaint;
 		board.NoTxCounter--;
 		break;
 	}
-
-
 	default: WindowRepaintStep = wrsOFF; break;
 	};
+
+	if (CurrentWindowRepaint != NULL)
+	{
+		if (CurrentWindowRepaint->DoClose)
+		{
+			GUI_WindowDestroy((TWindowClass**)&CurrentWindowRepaint);
+			CurrentWindowRepaint = WindowsList;
+		}
+	}
+
 	return 0;
 }
 

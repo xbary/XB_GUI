@@ -19,7 +19,7 @@ extern "C" {
 #include <IPAddress.h>
 
 
-TTaskDef XB_GUIGADGET_DefTask = { 1,&GUIGADGET_Setup,&GUIGADGET_Loop,&GUIGADGET_Message};
+TTaskDef XB_GUIGADGET_DefTask = { 3,&GUIGADGET_Setup,&GUIGADGET_Loop,&GUIGADGET_Message};
 
 typedef enum { dgHandle } TGUIGADGETFunction;
 TGUIGADGETFunction GUIGADGETFunction = dgHandle;
@@ -405,6 +405,14 @@ bool GUIGADGET_Message(TMessageBoard *Am)
 					res = true;
 					break;
 				}
+				case KF_INSERT:
+				{
+					if (m->SendInsertMessageToOwnerTask())
+					{
+					}
+					res = true;
+					break;
+				}
 				case KF_ENTER:
 				{
 			
@@ -471,6 +479,7 @@ bool GUIGADGET_Message(TMessageBoard *Am)
 					{
 						id->MoveEditCursor(-1);
 						id->EditVar.remove(id->CursorPosInputVar, 1);
+						id->SendChangeValueMessageToOwnerTask();
 						id->PaintVar();
 						res = true;
 						break;
@@ -478,6 +487,7 @@ bool GUIGADGET_Message(TMessageBoard *Am)
 					case KF_DELETE:
 					{
 						id->EditVar.remove(id->CursorPosInputVar, 1);
+						id->SendChangeValueMessageToOwnerTask();
 						id->PaintVar();
 						res = true;
 						break;
@@ -678,6 +688,7 @@ bool GUIGADGET_Message(TMessageBoard *Am)
 						if (ch != 0)
 						{
 							id->EditInsertChar(ch);
+							id->SendChangeValueMessageToOwnerTask();
 							id->PaintVar();
 						}
 						res = true;
@@ -797,9 +808,11 @@ void GUIGADGET_DestroyInputDialog(TGADGETInputDialog **Amenu)
 {
 	if (*Amenu != NULL)
 	{
-		board.SendMessage_FREEPTR(Amenu);
+		//void* t = Amenu;
+		
 		delete(*Amenu);
 		*Amenu = NULL;
+		//board.SendMessage_FREEPTR(Amenu);
 	}
 }
 
@@ -1119,7 +1132,19 @@ void TGADGETInputDialog::SendEscapeMessageToOwnerTask()
 	mb.Data.InputDialogData.TypeInputDialogAction = ida_ESCAPE_DIALOG;
 	board.DoMessage(&mb, true, NULL, OwnerTaskDef);
 }
-	
+
+void TGADGETInputDialog::SendChangeValueMessageToOwnerTask()
+{
+	TMessageBoard mb; xb_memoryfill(&mb, sizeof(TMessageBoard), 0);
+	mb.IDMessage = IM_INPUTDIALOG;
+	mb.fromTask = NULL;
+	mb.Data.InputDialogData.IDInputDialog = IDInputDialog;
+	mb.Data.InputDialogData.TypeInputDialogAction = ida_CHANGE_VALUE;
+	mb.Data.InputDialogData.ActionData.InputDialogChangeValue.Value = &EditVar;
+	board.DoMessage(&mb, true, NULL, OwnerTaskDef);
+}
+
+
 void TGADGETInputDialog::PaintVar()
 {
 	if (WindowClass != NULL)
@@ -1838,6 +1863,33 @@ void TGADGETMenu::ClickRightItemMenu(uint8_t Aclickitem)
 #endif
 }
 
+void TGADGETMenu::InsertItemMenu(uint8_t Aclickitem)
+{
+#ifdef XB_GUI
+	if (Aclickitem < ItemCount)
+	{
+		String s;
+		GetItemMenuString(Aclickitem, s);
+		if (s != "-")
+		{
+			TMessageBoard mb; xb_memoryfill(&mb, sizeof(TMessageBoard), 0);
+			mb.IDMessage = IM_MENU;
+			mb.Data.MenuData.TypeMenuAction = tmaCLICKRIGHT_ITEM_MENU;
+			mb.Data.MenuData.IDMenu = IDMenu;
+			mb.Data.MenuData.ActionData.MenuClickLeftRightData.ItemIndex = Aclickitem;
+			board.DoMessage(&mb, true, NULL, OwnerTaskDef);
+
+			if (WindowClass != NULL)
+			{
+				TypePaintMenuGadget = tpmgOnlyCurrent;
+				WindowClass->RepaintDataCounter++;
+			}
+		}
+	}
+#endif
+}
+
+
 bool TGADGETMenu::DeleteItemMenu(uint8_t Adelitem)
 {
 #ifdef XB_GUI
@@ -1887,6 +1939,16 @@ bool TGADGETMenu::SendEscapeMessageToOwnerTask()
 	mb.Data.MenuData.IDMenu = IDMenu;
 	mb.Data.MenuData.TypeMenuAction = tmaESCAPE_MENU;
 	return board.DoMessage(&mb, true, NULL,OwnerTaskDef);
+}
+
+bool TGADGETMenu::SendInsertMessageToOwnerTask()
+{
+	TMessageBoard mb; xb_memoryfill(&mb, sizeof(TMessageBoard), 0);
+	mb.IDMessage = IM_MENU;
+	mb.fromTask = NULL;
+	mb.Data.MenuData.IDMenu = IDMenu;
+	mb.Data.MenuData.TypeMenuAction = tmaINSERT_MENUITEM;
+	return board.DoMessage(&mb, true, NULL, OwnerTaskDef);
 }
 
 

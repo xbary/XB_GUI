@@ -34,8 +34,10 @@ public:
 	void ClickItemMenu(uint8_t Aclickitem);
 	void ClickRightItemMenu(uint8_t Aclickitem);
 	void ClickLeftItemMenu(uint8_t Aclickitem);
+	void InsertItemMenu(uint8_t Aclickitem);
 	bool DeleteItemMenu(uint8_t Adelitem);
 	bool SendEscapeMessageToOwnerTask();
+	bool SendInsertMessageToOwnerTask();
 
 	
 	uint8_t ItemCount;
@@ -77,7 +79,8 @@ public:
 	void EnterVAR();
 	void SendEnterMessageToOwnerTask();
 	void SendEscapeMessageToOwnerTask();
-	
+	void SendChangeValueMessageToOwnerTask();
+
 	TGADGETInputDialog *Next;
 	TGADGETInputDialog *Prev;
 
@@ -161,6 +164,10 @@ if (Am->Data.MenuData.IDMenu==Aidmenu) \
 
 #define ESCAPE_MENU() \
 if (Am->Data.MenuData.TypeMenuAction == tmaESCAPE_MENU) 
+
+#define INSERT_MENUITEM() \
+if (Am->Data.MenuData.TypeMenuAction == tmaINSERT_MENUITEM) 
+
 
 #define END_MENU() \
 if (Am->Data.MenuData.ActionData.MenuItemData.ItemIndex == 255) \
@@ -308,6 +315,33 @@ if (Am->Data.MenuData.ActionData.MenuItemData.ItemIndex == 255) \
 
 #define END_MENUITEM() } ItemIndex++; CountItems++;
 
+
+#define BEGIN_LIST_MENUITEMS(typeitem,varitemname,itemlist,iffilter) \
+{ \
+	uint8_t startitem = ItemIndex; \
+	for (uint8_t _itemIndex = 0; _itemIndex < itemlist##_count; _itemIndex++) \
+	{ \
+		typeitem *varitemname = itemlist; \
+		uint8_t indexitemlist=0; \
+		while (varitemname != NULL) \
+		{ \
+			if (iffilter) \
+			{ \
+				if (_itemIndex==indexitemlist) \
+				{ \
+
+
+#define END_LIST_MENUITEMS(varitemname) \
+					break; \
+				} \
+				indexitemlist++; \
+			} \
+			varitemname = varitemname->Next; \
+		} \
+	} \
+}
+
+
 #define OPEN_MAINMENU() \
 if (Am->Data.MenuData.TypeMenuAction == tmaIS_MAINMENU) \
 { \
@@ -387,6 +421,10 @@ else \
 #define EVENT_ENTER() if (Am->Data.InputDialogData.TypeInputDialogAction==ida_ENTER_DIALOG)
 
 #define EVENT_ESCAPE() if (Am->Data.InputDialogData.TypeInputDialogAction==ida_ESCAPE_DIALOG)
+
+#define EVENT_ONCHANGE() if (Am->Data.InputDialogData.TypeInputDialogAction==ida_CHANGE_VALUE)
+
+#define OC_VALUE (*Am->Data.InputDialogData.ActionData.InputDialogChangeValue.Value)
 
 #define END_DIALOG() }}
 
